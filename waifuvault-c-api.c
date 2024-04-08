@@ -77,6 +77,7 @@ FileResponse uploadFile(FileUpload fileObj) {
     if(!checkError(res)) {
         retval = deserializeResponse(contents.memory, true);
     }
+    free(contents.memory);
     return retval;
 }
 
@@ -101,6 +102,7 @@ FileResponse fileInfo(char *token, bool formatted) {
     if(!checkError(res)) {
         retval = deserializeResponse(contents.memory, formatted);
     }
+    free(contents.memory);
     return retval;
 }
 
@@ -141,6 +143,7 @@ FileResponse fileUpdate(char *token, char *password, char *previousPassword, cha
     if(!checkError(res)) {
         retval = deserializeResponse(contents.memory, false);
     }
+    free(contents.memory);
     return retval;
 }
 
@@ -148,6 +151,7 @@ bool deleteFile(char *token) {
     char url[120];
     CURLcode res;
     MemoryStream contents;
+    bool retval;
 
     sprintf(url, "%s/%s", BASEURL, token);
     contents.memory = malloc(1);
@@ -163,7 +167,9 @@ bool deleteFile(char *token) {
     res = curl_easy_perform(curl);
 
     if(checkError(res)) return false;
-    return strncmp(contents.memory,"true",4)==0;
+    retval = strncmp(contents.memory,"true",4)==0;
+    free(contents.memory);
+    return retval;
 }
 
 void getFile(FileResponse fileObj, MemoryStream *contents, char *password) {
