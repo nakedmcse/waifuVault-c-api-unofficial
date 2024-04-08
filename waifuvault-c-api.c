@@ -166,9 +166,8 @@ bool deleteFile(char *token) {
     return strncmp(contents.memory,"true",4)==0;
 }
 
-void *getFile(FileResponse fileObj, char *password) {
+void getFile(FileResponse fileObj, MemoryStream *contents, char *password) {
     CURLcode res;
-    MemoryStream contents;
     char xpassword[80];
     struct curl_slist *headers = NULL;
 
@@ -177,10 +176,10 @@ void *getFile(FileResponse fileObj, char *password) {
         strcpy(fileObj.url, fileUrl.url);
     }
 
-    contents.memory = malloc(1);
-    contents.size = 0;
+    contents->memory = malloc(1);
+    contents->size = 0;
     curl = curl_easy_init();
-    if(!curl) return NULL;
+    if(!curl) return;
 
     if(strlen(password)>0) {
         strcat(xpassword,"x-password: ");
@@ -192,14 +191,11 @@ void *getFile(FileResponse fileObj, char *password) {
     curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryStream);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&contents);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)contents);
     res = curl_easy_perform(curl);
 
     if(headers) curl_slist_free_all(headers);
-    if(!checkError(res)) return NULL;
-
-    // TODO: Pass a Memorystream object back
-    return contents.memory;
+    if(!checkError(res)) return;
 }
 
 FileResponse sendContent(char *targetUrl, void *content) {

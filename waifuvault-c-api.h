@@ -11,7 +11,7 @@ FileResponse uploadFile(FileUpload fileObj);
 FileResponse fileInfo(char *token, bool formatted);
 FileResponse fileUpdate(char *token, char *password, char *previousPassword, char *customExpiry, bool hideFilename);
 bool deleteFile(char *token);
-void *getFile(FileResponse fileObj, char *password);
+void getFile(FileResponse fileObj, MemoryStream *contents, char *password);
 FileResponse sendContent(char *targetUrl, void *content);
 bool checkError(CURLcode resp);
 FileResponse deserializeResponse(char *body, bool stringRetention);

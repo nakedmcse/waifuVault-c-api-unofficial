@@ -9,6 +9,7 @@
 int main(void) {
     FileResponse infoResponse, uploadResponse;
     FileUpload urlUpload;
+    MemoryStream download;
     bool deleteResponse;
 
     openCurl();
@@ -27,6 +28,12 @@ int main(void) {
     printf("Hidden Filename: %s\n", infoResponse.options.hasFilename ? "True" : "False");
     printf("One Time Download: %s\n", infoResponse.options.oneTimeDownload ? "True" : "False");
     printf("Encrypted: %s\n\n", infoResponse.options.protected ? "True" : "False");
+    sleep(1);
+
+    getFile(uploadResponse, &download, "");
+    printf("--DOWNLOAD COMPLETED--\n");
+    printf("Download size: %zu\n\n", download.size);
+    free(download.memory);
     sleep(1);
 
     deleteResponse = deleteFile(uploadResponse.token);
