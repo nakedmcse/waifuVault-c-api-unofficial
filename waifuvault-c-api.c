@@ -120,7 +120,7 @@ FileResponse fileUpdate(char *token, char *password, char *previousPassword, cha
     curl = curl_easy_init();
     if(!curl) return retval;
 
-    strcat(fields, "{\"password\":\"");
+    sprintf(fields, "{\"password\":\"");
     if(strlen(password)>0) strcat(fields, password);
     strcat(fields, "\",\"previousPassword\":\"");
     if(strlen(previousPassword)>0) strcat(fields, previousPassword);
@@ -188,7 +188,7 @@ void getFile(FileResponse fileObj, MemoryStream *contents, char *password) {
     if(!curl) return;
 
     if(strlen(password)>0) {
-        strcat(xpassword,"x-password: ");
+        sprintf(xpassword,"x-password: ");
         strcat(xpassword, password);
         headers = curl_slist_append(headers, xpassword);
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
@@ -201,7 +201,7 @@ void getFile(FileResponse fileObj, MemoryStream *contents, char *password) {
     res = curl_easy_perform(curl);
 
     if(headers) curl_slist_free_all(headers);
-    if(!checkError(res)) return;
+    if(checkError(res)) return;
 }
 
 FileResponse sendContent(char *targetUrl, void *content) {
@@ -213,8 +213,14 @@ FileResponse sendContent(char *targetUrl, void *content) {
 }
 
 bool checkError(CURLcode resp) {
+    long http_code = 0;
     if(resp != CURLE_OK) {
         fprintf(stderr, "curl failed: %s\n", curl_easy_strerror(resp));
+        return true;
+    }
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+    if(http_code >= 400) {
+        fprintf(stderr, "http code error: %d\n", (int)http_code);
         return true;
     }
     return false;

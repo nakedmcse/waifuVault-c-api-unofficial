@@ -7,7 +7,7 @@
 #include "../waifuvault-c-models.h"
 
 int main(void) {
-    FileResponse infoResponse, uploadResponse;
+    FileResponse infoResponse, uploadResponse, updateResponse;
     FileUpload urlUpload;
     MemoryStream download;
     bool deleteResponse;
@@ -30,7 +30,14 @@ int main(void) {
     printf("Encrypted: %s\n\n", infoResponse.options.protected ? "True" : "False");
     sleep(1);
 
-    getFile(uploadResponse, &download, "");
+    updateResponse = fileUpdate(uploadResponse.token, "dangerWaifu", "", "", false);
+    printf("--UPDATE COMPLETED--\n");
+    printf("URL: %s\n", updateResponse.url);
+    printf("Retention: %s\n", updateResponse.retentionPeriod);
+    printf("Encrypted: %s\n\n", updateResponse.options.protected ? "True" : "False");
+    sleep(1);
+
+    getFile(uploadResponse, &download, "dangerWaifu");
     printf("--DOWNLOAD COMPLETED--\n");
     printf("Download size: %zu\n\n", download.size);
     free(download.memory);
