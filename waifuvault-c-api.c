@@ -51,13 +51,12 @@ FileResponse uploadFile(FileUpload fileObj) {
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fields);
         res = curl_easy_perform(curl);
     }
-    else if(strlen(fileObj.filename)>0 && !fileObj.buffer) {
+    else if(strlen(fileObj.filename)>0 && fileObj.buffer==NULL) {
         // File Upload
         curl_formadd(&formpost,
                &lastptr,
                CURLFORM_COPYNAME, "file",
                CURLFORM_FILE, fileObj.filename,
-               CURLFORM_CONTENTTYPE, "octet-stream",
                CURLFORM_END);
         curl_easy_setopt(curl, CURLOPT_URL, targetUrl);
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
@@ -318,6 +317,7 @@ FileUpload CreateFileUpload(char *target, char *expires, char *password, bool hi
     FileUpload retval;
     retval.hideFilename = hidefilename;
     retval.oneTimeDownload = onetimedownload;
+    retval.buffer = NULL;
     strcpy(retval.expires,expires);
     strcpy(retval.password,password);
     if(strncasecmp(target, "http://", 7) == 0 || strncasecmp(target, "https://", 8) == 0) {

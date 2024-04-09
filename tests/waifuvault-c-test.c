@@ -14,7 +14,8 @@ int main(void) {
 
     openCurl();
 
-    urlUpload = CreateFileUpload("https://waifuvault.moe/assets/custom/images/08.png","10m","",false,false);
+    //urlUpload = CreateFileUpload("https://waifuvault.moe/assets/custom/images/08.png","10m","",false,false);
+    urlUpload = CreateFileUpload("/Users/walker/Documents/Code/waifuVault-c-api-unofficial/tests/RoryMercury.png","10m","",false,false);
     uploadResponse = uploadFile(urlUpload);
     printf("--UPLOAD COMPLETED--\n");
     printf("URL: %s\n", uploadResponse.url);
