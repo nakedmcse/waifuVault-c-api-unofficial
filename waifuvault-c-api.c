@@ -9,7 +9,7 @@
 #include<strings.h>
 #include<curl/curl.h>
 
-#define BASEURL "https://waifuvault.walker.moe/rest"
+#define BASEURL "https://waifuvault.moe/rest"
 
 static CURL *curl;
 
