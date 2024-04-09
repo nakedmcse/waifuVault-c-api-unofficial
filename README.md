@@ -1,5 +1,7 @@
 # waifuvault-C-api-unofficial
 
+![tests](https://github.com/nakedmcse/waifuVault-c-api-unofficial/actions/workflows/build.yml/badge.svg)
+
 This contains the unofficial API bindings for uploading, deleting and obtaining files
 with [waifuvault.moe](https://waifuvault.moe/). Contains a full up to date API for interacting with the service.
 
