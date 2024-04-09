@@ -1,0 +1,23 @@
+# Build libs
+
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup GCC
+      uses: Dup4/actions-setup-gcc@v1
+      with:
+        version: latest
+    - name: Build libraries
+      run: gcc -w -c mjson.c -c waifuvault-c-api.c
+      
