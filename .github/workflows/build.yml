@@ -13,11 +13,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
+    - name: Install Dependencies
+      run: sudo apt-get install libcurl-dev
     - name: Setup GCC
       uses: Dup4/actions-setup-gcc@v1
       with:
         version: latest
     - name: Build libraries
       run: gcc -w -c mjson.c -c waifuvault-c-api.c
-      
