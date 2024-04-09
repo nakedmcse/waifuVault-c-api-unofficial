@@ -11,12 +11,41 @@ int main(void) {
     FileUpload urlUpload;
     MemoryStream download;
     bool deleteResponse;
+    FILE *file;
+    char *buffer;
+    long fileLen;
 
     openCurl();
 
     //urlUpload = CreateFileUpload("https://waifuvault.moe/assets/custom/images/08.png","10m","",false,false);
-    urlUpload = CreateFileUpload("/Users/walker/Documents/Code/waifuVault-c-api-unofficial/tests/RoryMercury.png","10m","",false,false);
+    //urlUpload = CreateFileUpload("/Users/walker/Documents/Code/waifuVault-c-api-unofficial/tests/RoryMercury.png","10m","",false,false);
+    file = fopen("/Users/walker/Documents/Code/waifuVault-c-api-unofficial/tests/RoryMercury.png", "rb");
+    if (!file) {
+        fprintf(stderr, "failed to open file");
+        exit(1);
+    }
+
+    fseek(file, 0, SEEK_END);
+    fileLen = ftell(file);
+    rewind(file);
+    buffer = malloc(fileLen);
+    if (!buffer) {
+        fprintf(stderr,"Memory allocation failed");
+        fclose(file);
+        exit(1);
+    }
+
+    fread(buffer, 1, fileLen, file);
+    if (ferror(file)) {
+        fprintf(stderr,"File read failed");
+        fclose(file);
+        exit(1);
+    }
+
+    urlUpload = CreateBufferUpload(buffer,fileLen,"RoryMercury.png","10m","",false,false);
     uploadResponse = uploadFile(urlUpload);
+    free(buffer);
+    fclose(file);
     printf("--UPLOAD COMPLETED--\n");
     printf("URL: %s\n", uploadResponse.url);
     printf("Token: %s\n\n", uploadResponse.token);

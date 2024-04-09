@@ -13,6 +13,7 @@ typedef struct FileUpload {
     char filename[512];
     char url[4096];
     void *buffer;
+    long bufferSize;
     char expires[10];
     char password[512];
     bool hideFilename;

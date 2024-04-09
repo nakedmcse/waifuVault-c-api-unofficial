@@ -69,8 +69,21 @@ FileResponse uploadFile(FileUpload fileObj) {
     }
     else {
         // Buffer upload
-        // Load buffer to multipart upload content as file,<file>
-        retval = sendContent(targetUrl, content);
+        curl_formadd(&formpost,
+               &lastptr,
+               CURLFORM_COPYNAME, "file",
+               CURLFORM_BUFFER, fileObj.filename,
+               CURLFORM_BUFFERPTR, fileObj.buffer,
+               CURLFORM_BUFFERLENGTH, fileObj.bufferSize,
+               CURLFORM_END);
+        curl_easy_setopt(curl, CURLOPT_URL, targetUrl);
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryStream);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&contents);
+        curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
+        res = curl_easy_perform(curl);
+        curl_formfree(formpost);
     }
 
     if(!checkError(res)) {
@@ -203,14 +216,6 @@ void getFile(FileResponse fileObj, MemoryStream *contents, char *password) {
     if(checkError(res)) return;
 }
 
-FileResponse sendContent(char *targetUrl, void *content) {
-    FileResponse retval;
-    // PUT request to URL
-    // Check for errors
-    // Deserialize to retval
-    return retval;
-}
-
 bool checkError(CURLcode resp) {
     long http_code = 0;
     if(resp != CURLE_OK) {
@@ -331,13 +336,15 @@ FileUpload CreateFileUpload(char *target, char *expires, char *password, bool hi
     return retval;
 }
 
-FileUpload CreateBufferUpload(void *target, char *expires, char *password, bool hidefilename, bool onetimedownload) {
+FileUpload CreateBufferUpload(void *target, long size, char *filename, char *expires, char *password, bool hidefilename, bool onetimedownload) {
     FileUpload retval;
     retval.buffer = target;
+    retval.bufferSize = size;
     retval.hideFilename = hidefilename;
     retval.oneTimeDownload = onetimedownload;
     strcpy(retval.expires,expires);
     strcpy(retval.password,password);
+    strcpy(retval.filename,filename);
     return retval;
 }
 
