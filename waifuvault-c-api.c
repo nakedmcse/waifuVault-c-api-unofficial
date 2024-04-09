@@ -12,15 +12,21 @@
 #define BASEURL "https://waifuvault.moe/rest"
 
 static CURL *curl;
+static ErrorResponse *error;
 
 void openCurl() {
     curl_global_init(CURL_GLOBAL_DEFAULT);
     curl = curl_easy_init();
+    error = NULL;
 };
 
 void closeCurl() {
     curl_easy_cleanup(curl);
     curl_global_cleanup();
+}
+
+ErrorResponse *getError() {
+    return error;
 }
 
 FileResponse uploadFile(FileUpload fileObj) {
@@ -86,7 +92,7 @@ FileResponse uploadFile(FileUpload fileObj) {
         curl_formfree(formpost);
     }
 
-    if(!checkError(res)) {
+    if(!checkError(res, contents.memory)) {
         retval = deserializeResponse(contents.memory, true);
     }
     free(contents.memory);
@@ -111,7 +117,7 @@ FileResponse fileInfo(char *token, bool formatted) {
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryStream);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&contents);
     res = curl_easy_perform(curl);
-    if(!checkError(res)) {
+    if(!checkError(res,contents.memory)) {
         retval = deserializeResponse(contents.memory, formatted);
     }
     free(contents.memory);
@@ -152,7 +158,7 @@ FileResponse fileUpdate(char *token, char *password, char *previousPassword, cha
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fields);
     res = curl_easy_perform(curl);
     curl_slist_free_all(headers);
-    if(!checkError(res)) {
+    if(!checkError(res,contents.memory)) {
         retval = deserializeResponse(contents.memory, false);
     }
     free(contents.memory);
@@ -178,7 +184,7 @@ bool deleteFile(char *token) {
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&contents);
     res = curl_easy_perform(curl);
 
-    if(checkError(res)) return false;
+    if(checkError(res,contents.memory)) return false;
     retval = strncmp(contents.memory,"true",4)==0;
     free(contents.memory);
     return retval;
@@ -213,11 +219,23 @@ void getFile(FileResponse fileObj, MemoryStream *contents, char *password) {
     res = curl_easy_perform(curl);
 
     if(headers) curl_slist_free_all(headers);
-    if(checkError(res)) return;
+    if(checkError(res,contents->memory)) return;
 }
 
-bool checkError(CURLcode resp) {
+bool checkError(CURLcode resp, char *body) {
+    char name[80];
+    char message[512];
+    int status = 0;
+    int jsonStatus = 0;
     long http_code = 0;
+
+    struct json_attr_t error_attrs[] = {
+        {"name", t_string, .addr.string = name, .len = sizeof(name)},
+        {"status", t_integer, .addr.integer = &status},
+        {"message", t_string, .addr.string = message, .len = sizeof(message)},
+        {NULL}
+    };
+
     if(resp != CURLE_OK) {
         fprintf(stderr, "curl failed: %s\n", curl_easy_strerror(resp));
         return true;
@@ -225,6 +243,20 @@ bool checkError(CURLcode resp) {
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     if(http_code >= 400) {
         fprintf(stderr, "http code error: %d\n", (int)http_code);
+
+        jsonStatus = json_read_object(body, error_attrs, NULL);
+        if(jsonStatus!=0) {
+            fprintf(stderr, "json deserialize failed: %s\n", json_error_string(jsonStatus));
+            fprintf(stderr, "raw body: %s\n", body);
+            fprintf(stderr, "body size: %d\n", strlen(body));
+            return true;
+        };
+
+        error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
+        error->status = status;
+        strcpy(error->name, name);
+        strcpy(error->message, message);
+
         return true;
     }
     return false;

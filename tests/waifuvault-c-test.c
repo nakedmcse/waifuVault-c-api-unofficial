@@ -11,6 +11,7 @@ int main(void) {
     FileUpload urlUpload;
     MemoryStream download;
     bool deleteResponse;
+    ErrorResponse *err;
     FILE *file;
     char *buffer;
     long fileLen;
@@ -58,6 +59,17 @@ int main(void) {
     printf("Hidden Filename: %s\n", infoResponse.options.hasFilename ? "True" : "False");
     printf("One Time Download: %s\n", infoResponse.options.oneTimeDownload ? "True" : "False");
     printf("Encrypted: %s\n\n", infoResponse.options.protected ? "True" : "False");
+    sleep(1);
+
+    infoResponse = fileInfo("bad-token",true);
+    printf("--BAD TOKEN COMPLETED--\n");
+    err = getError();
+    if(err) {
+        printf("Error Status: %d\n", err->status);
+        printf("Error Name: %s\n", err->name);
+        printf("Error Message: %s\n\n", err->message);
+        free(err);
+    }
     sleep(1);
 
     updateResponse = fileUpdate(uploadResponse.token, "dangerWaifu", "", "", false);

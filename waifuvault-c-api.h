@@ -7,12 +7,13 @@
 
 void openCurl();
 void closeCurl();
+ErrorResponse *getError();
 FileResponse uploadFile(FileUpload fileObj);
 FileResponse fileInfo(char *token, bool formatted);
 FileResponse fileUpdate(char *token, char *password, char *previousPassword, char *customExpiry, bool hideFilename);
 bool deleteFile(char *token);
 void getFile(FileResponse fileObj, MemoryStream *contents, char *password);
-bool checkError(CURLcode resp);
+bool checkError(CURLcode resp, char *body);
 FileResponse deserializeResponse(char *body, bool stringRetention);
 char* BuildURL(char *baseURL, FileUpload upload);
 FileUpload CreateFileUpload(char *target, char *expires, char *password, bool hidefilename, bool onetimedownload);

@@ -28,6 +28,27 @@ Your code finally needs to be linked against mjson, waifuvault-c-api and curl.
 gcc -o your-code your-code.c mjson.o waifuvault-c-api.o -lcurl
 ```
 
+## Error Handling
+
+After each call to the SDK, you need to use a call to getError to check for any errors during the call.  If it returns NULL, then all was OK. 
+If there was an error, then you must consume the error with free.
+
+```c
+FileResponse infoResponse
+ErrorResponse *err;
+
+infoResponse = fileInfo("bad-token",true);
+
+err = getError();
+if(err) {
+    printf("Error Status: %d\n", err->status);
+    printf("Error Name: %s\n", err->name);
+    printf("Error Message: %s\n\n", err->message);
+    free(err);
+    exit(1);
+}
+```
+
 ## Usage
 
 This API contains 5 interactions:
