@@ -55,11 +55,11 @@ if(err) {
 
 This API contains 5 interactions:
 
-1. Upload File
-2. Get File Info
-3. Update File Info
-4. Delete File
-5. Get File
+1. [Upload File](#upload-file)
+2. [Get File Info](#get-file-info)
+3. [Update File Info](#update-file-info)
+4. [Delete File](#delete-file)
+5. [Get File](#get-file)
 
 You need to include the header files in your code for the package:
 
@@ -80,7 +80,7 @@ And at the bottom:
 closeCurl();
 ```
 
-### Upload File
+### Upload File<a id="upload-file"></a>
 
 To Upload a file, use the `uploadFile` function. This function takes the following options as an object:
 
@@ -158,7 +158,7 @@ printf("URL: %s\n", uploadResponse.url);
 printf("Token: %s\n\n", uploadResponse.token);
 ```
 
-### Get File Info
+### Get File Info<a id="get-file-info"></a>
 
 If you have a token from your upload. Then you can get file info. This results in the following info:
 
@@ -202,7 +202,7 @@ printf("One Time Download: %s\n", infoResponse.options.oneTimeDownload ? "True" 
 printf("Encrypted: %s\n\n", infoResponse.options.protected ? "True" : "False");
 ```
 
-### Update File Info
+### Update File Info<a id="update-file-info"></a>
 
 If you have a token from your upload, then you can update the information for the file.  You can change the password or remove it, 
 you can set custom expiry time or remove it, and finally you can choose whether the filename is hidden.
@@ -227,7 +227,7 @@ printf("Retention: %s\n", updateResponse.retentionPeriod);
 printf("Encrypted: %s\n\n", updateResponse.options.protected ? "True" : "False");
 ```
 
-### Delete File
+### Delete File<a id="delete-file"></a>
 
 To delete a file, you must supply your token to the `deletefile` function.
 
@@ -247,7 +247,7 @@ deleteResponse = deleteFile(uploadResponse.token);
 printf("Return: %s\n\n", deleteResponse ? "True" : "False");
 ```
 
-### Get File
+### Get File<a id="get-file"></a>
 
 This lib also supports obtaining a file from the API as a Buffer by supplying either the token or the unique identifier
 of the file (epoch/filename).
