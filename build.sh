@@ -1,2 +1,2 @@
 #!/bin/sh
-gcc -c mjson.c -c waifuvault-c-api.c
+gcc -w -c mjson.c -c waifuvault-c-api.c
