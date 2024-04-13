@@ -1,6 +1,8 @@
 # waifuvault-C-api-unofficial
 
 ![tests](https://github.com/nakedmcse/waifuVault-c-api-unofficial/actions/workflows/build.yml/badge.svg)
+[![GitHub issues](https://img.shields.io/github/issues/nakedmcse/waifuvault-c-api-unofficial.png)](https://github.com/nakedmcse/waifuvault-c-api-unofficial/issues)
+[![last-commit](https://img.shields.io/github/last-commit/nakedmcse/waifuvault-c-api-unofficial)](https://github.com/nakedmcse/waifuvault-c-api-unofficial/commits/master)
 
 This contains the unofficial API bindings for uploading, deleting and obtaining files
 with [waifuvault.moe](https://waifuvault.moe/). Contains a full up to date API for interacting with the service.
