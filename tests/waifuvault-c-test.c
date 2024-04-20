@@ -19,7 +19,8 @@ int main(void) {
     openCurl();
 
     //urlUpload = CreateFileUpload("https://waifuvault.moe/assets/custom/images/08.png","10m","",false,false);
-    //urlUpload = CreateFileUpload("/Users/walker/Documents/Code/waifuVault-c-api-unofficial/tests/RoryMercury.png","10m","",false,false);
+    urlUpload = CreateFileUpload("~/Downloads/rider3.png","10m","",false,false);
+    /*
     file = fopen("/Users/walker/Documents/Code/waifuVault-c-api-unofficial/tests/RoryMercury.png", "rb");
     if (!file) {
         fprintf(stderr, "failed to open file");
@@ -44,9 +45,10 @@ int main(void) {
     }
 
     urlUpload = CreateBufferUpload(buffer,fileLen,"RoryMercury.png","10m","",false,false);
+    */
     uploadResponse = uploadFile(urlUpload);
-    free(buffer);
-    fclose(file);
+    //free(buffer);
+    //fclose(file);
     printf("--UPLOAD COMPLETED--\n");
     printf("URL: %s\n", uploadResponse.url);
     printf("Token: %s\n\n", uploadResponse.token);

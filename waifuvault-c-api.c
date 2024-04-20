@@ -62,7 +62,7 @@ FileResponse uploadFile(FileUpload fileObj) {
         curl_formadd(&formpost,
                &lastptr,
                CURLFORM_COPYNAME, "file",
-               CURLFORM_FILE, fileObj.filename,
+               CURLFORM_FILE, expandHomedir(fileObj.filename),
                CURLFORM_END);
         curl_easy_setopt(curl, CURLOPT_URL, targetUrl);
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
@@ -316,6 +316,28 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
     };
 
     return retval;
+}
+
+// Expand homedir
+
+char* expandHomedir(const char* path) {
+    if (path[0] == '~') {
+        const char* home = getenv("HOME");
+        if (!home) {
+            return strdup(path);
+        }
+
+        size_t new_path_size = strlen(home) + strlen(path);
+        char* new_path = malloc(new_path_size);
+        if (!new_path) {
+            return strdup(path);
+        }
+
+        strcpy(new_path, home);
+        strcat(new_path, path + 1);
+        return new_path;
+    }
+    return strdup(path);
 }
 
 // Builder helper functions

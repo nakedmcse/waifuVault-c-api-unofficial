@@ -22,5 +22,6 @@ FileOptions CreateFileOptions(bool hasfilename, bool onetimedownload, bool prote
 FileResponse CreateFileResponse(char *token, char *url, char *retention, FileOptions options);
 ErrorResponse CreateErrorResponse(char *name, int status, char *message);
 static size_t WriteMemoryStream(void *contents, size_t size, size_t membytes, void *userp);
+char* expandHomedir(const char* path);
 
 #endif
