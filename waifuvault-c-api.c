@@ -25,6 +25,22 @@ void closeCurl() {
     curl_global_cleanup();
 }
 
+CURLcode dispatchCurl(char *targetUrl, char *targetMethod, char *fields, struct curl_httppost *formpost, struct curl_slist *headers, MemoryStream *contents) {
+    curl = curl_easy_init();
+    contents->memory = malloc(1);
+    contents->size = 0;
+
+    curl_easy_setopt(curl, CURLOPT_URL, targetUrl);
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, targetMethod);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryStream);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)contents);
+    if(headers) curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    if(formpost) curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
+    if(fields) curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fields);
+    return curl_easy_perform(curl);
+}
+
 ErrorResponse *getError() {
     return error;
 }
@@ -49,13 +65,7 @@ FileResponse uploadFile(FileUpload fileObj) {
         // URL Upload
         strcat(fields, "url=");
         strcat(fields, curl_easy_escape(curl, fileObj.url, strlen(fileObj.url)));
-        curl_easy_setopt(curl, CURLOPT_URL, targetUrl);
-        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryStream);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&contents);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fields);
-        res = curl_easy_perform(curl);
+        res = dispatchCurl(targetUrl, "PUT", fields, NULL, NULL, &contents);
     }
     else if(strlen(fileObj.filename)>0 && fileObj.buffer==NULL) {
         // File Upload
@@ -64,13 +74,7 @@ FileResponse uploadFile(FileUpload fileObj) {
                CURLFORM_COPYNAME, "file",
                CURLFORM_FILE, expandHomedir(fileObj.filename),
                CURLFORM_END);
-        curl_easy_setopt(curl, CURLOPT_URL, targetUrl);
-        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryStream);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&contents);
-        curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
-        res = curl_easy_perform(curl);
+        res = dispatchCurl(targetUrl, "PUT", NULL, formpost, NULL, &contents);
         curl_formfree(formpost);
     }
     else {
@@ -82,13 +86,7 @@ FileResponse uploadFile(FileUpload fileObj) {
                CURLFORM_BUFFERPTR, fileObj.buffer,
                CURLFORM_BUFFERLENGTH, fileObj.bufferSize,
                CURLFORM_END);
-        curl_easy_setopt(curl, CURLOPT_URL, targetUrl);
-        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryStream);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&contents);
-        curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
-        res = curl_easy_perform(curl);
+        res = dispatchCurl(targetUrl, "PUT", NULL, formpost, NULL, &contents);
         curl_formfree(formpost);
     }
 
@@ -108,15 +106,7 @@ FileResponse fileInfo(char *token, bool formatted) {
     sprintf(url, "%s/%s?formatted=%s", BASEURL, token, formatted ? "true" : "false");
     contents.memory = malloc(1);
     contents.size = 0;
-    curl = curl_easy_init();
-
-    if(!curl) return retval;
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryStream);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&contents);
-    res = curl_easy_perform(curl);
+    res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
     if(!checkError(res,contents.memory)) {
         retval = deserializeResponse(contents.memory, formatted);
     }
@@ -133,10 +123,6 @@ FileResponse fileUpdate(char *token, char *password, char *previousPassword, cha
     struct curl_slist *headers = NULL;
 
     sprintf(url, "%s/%s", BASEURL, token);
-    contents.memory = malloc(1);
-    contents.size = 0;
-    curl = curl_easy_init();
-    if(!curl) return retval;
 
     sprintf(fields, "{\"password\":\"");
     if(strlen(password)>0) strcat(fields, password);
@@ -149,14 +135,8 @@ FileResponse fileUpdate(char *token, char *password, char *previousPassword, cha
     strcat(fields, "}");
 
     headers = curl_slist_append(headers, "Content-Type: application/json; charset=utf-8");
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH");
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryStream);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&contents);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fields);
-    res = curl_easy_perform(curl);
+    res = dispatchCurl(url, "PATCH", fields, NULL, headers, &contents);
+
     curl_slist_free_all(headers);
     if(!checkError(res,contents.memory)) {
         retval = deserializeResponse(contents.memory, false);
@@ -172,17 +152,8 @@ bool deleteFile(char *token) {
     bool retval;
 
     sprintf(url, "%s/%s", BASEURL, token);
-    contents.memory = malloc(1);
-    contents.size = 0;
-    curl = curl_easy_init();
 
-    if(!curl) return false;
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryStream);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&contents);
-    res = curl_easy_perform(curl);
+    res = dispatchCurl(url, "DELETE", NULL, NULL, NULL, &contents);
 
     if(checkError(res,contents.memory)) return false;
     retval = strncmp(contents.memory,"true",4)==0;
@@ -200,23 +171,14 @@ void getFile(FileResponse fileObj, MemoryStream *contents, char *password) {
         strcpy(fileObj.url, fileUrl.url);
     }
 
-    contents->memory = malloc(1);
-    contents->size = 0;
-    curl = curl_easy_init();
-    if(!curl) return;
-
     if(strlen(password)>0) {
         sprintf(xpassword,"x-password: ");
         strcat(xpassword, password);
         headers = curl_slist_append(headers, xpassword);
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     };
-    curl_easy_setopt(curl, CURLOPT_URL, fileObj.url);
-    curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryStream);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)contents);
-    res = curl_easy_perform(curl);
+
+    res = dispatchCurl(fileObj.url, "GET", NULL, NULL, headers ? headers : NULL, contents);
 
     if(headers) curl_slist_free_all(headers);
     if(checkError(res,contents->memory)) return;
