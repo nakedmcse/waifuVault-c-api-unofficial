@@ -35,11 +35,6 @@ char* BuildURL(char *baseURL, FileUpload upload) {
 
     char buffer[4096];
 
-    if(strlen(upload.password)>0) {
-        sprintf(buffer, "password=%s&", upload.password);
-        strcat(retval, buffer);
-    }
-
     if(strlen(upload.expires)>0) {
         sprintf(buffer, "expires=%s&", upload.expires);
         strcat(retval, buffer);
