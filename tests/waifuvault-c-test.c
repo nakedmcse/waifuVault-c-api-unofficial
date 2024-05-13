@@ -19,7 +19,7 @@ int main(void) {
     openCurl();
 
     //urlUpload = CreateFileUpload("https://waifuvault.moe/assets/custom/images/08.png","10m","",false,false);
-    urlUpload = CreateFileUpload("~/Downloads/rider3.png","10m","",false,false);
+    urlUpload = CreateFileUpload("~/Downloads/rider3.png","10m","dangerWaifu",false,false);
     /*
     file = fopen("/Users/walker/Documents/Code/waifuVault-c-api-unofficial/tests/RoryMercury.png", "rb");
     if (!file) {
@@ -74,14 +74,14 @@ int main(void) {
     }
     sleep(1);
 
-    updateResponse = fileUpdate(uploadResponse.token, "dangerWaifu", "", "", false);
+    updateResponse = fileUpdate(uploadResponse.token, "dangerWaifu2", "dangerWaifu", "", false);
     printf("--UPDATE COMPLETED--\n");
     printf("URL: %s\n", updateResponse.url);
     printf("Retention: %s\n", updateResponse.retentionPeriod);
     printf("Encrypted: %s\n\n", updateResponse.options.protected ? "True" : "False");
     sleep(1);
 
-    getFile(uploadResponse, &download, "dangerWaifu");
+    getFile(uploadResponse, &download, "dangerWaifu2");
     printf("--DOWNLOAD COMPLETED--\n");
     printf("Download size: %zu\n\n", download.size);
     free(download.memory);
