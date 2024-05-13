@@ -66,6 +66,12 @@ FileResponse uploadFile(FileUpload fileObj) {
         // URL Upload
         strcat(fields, "url=");
         strcat(fields, curl_easy_escape(curl, fileObj.url, strlen(fileObj.url)));
+
+        if (strlen(fileObj.password) > 0) {
+            strcat(fields, "&password=");
+            strcat(fields, curl_easy_escape(curl, fileObj.password, strlen(fileObj.password)));
+        }
+
         res = dispatchCurl(targetUrl, "PUT", fields, NULL, NULL, &contents);
     }
     else if(strlen(fileObj.filename)>0 && fileObj.buffer==NULL) {
@@ -75,6 +81,15 @@ FileResponse uploadFile(FileUpload fileObj) {
                CURLFORM_COPYNAME, "file",
                CURLFORM_FILE, expandHomedir(fileObj.filename),
                CURLFORM_END);
+
+        if (strlen(fileObj.password) > 0) {
+            curl_formadd(&formpost,
+                         &lastptr,
+                         CURLFORM_COPYNAME, "password",
+                         CURLFORM_COPYCONTENTS, fileObj.password,
+                         CURLFORM_END);
+        }
+
         res = dispatchCurl(targetUrl, "PUT", NULL, formpost, NULL, &contents);
         curl_formfree(formpost);
     }
@@ -87,6 +102,15 @@ FileResponse uploadFile(FileUpload fileObj) {
                CURLFORM_BUFFERPTR, fileObj.buffer,
                CURLFORM_BUFFERLENGTH, fileObj.bufferSize,
                CURLFORM_END);
+
+        if (strlen(fileObj.password) > 0) {
+            curl_formadd(&formpost,
+                         &lastptr,
+                         CURLFORM_COPYNAME, "password",
+                         CURLFORM_COPYCONTENTS, fileObj.password,
+                         CURLFORM_END);
+        }
+
         res = dispatchCurl(targetUrl, "PUT", NULL, formpost, NULL, &contents);
         curl_formfree(formpost);
     }
