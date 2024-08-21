@@ -46,6 +46,56 @@ ErrorResponse *getError() {
     return error;
 }
 
+BucketResponse createBucket() {
+    char url[120];
+    CURLcode res;
+    MemoryStream contents;
+    BucketResponse retval;
+
+    sprintf(url, "%s/bucket/create", BASEURL);
+
+    res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
+    if(!checkError(res, contents.memory)) {
+        retval = deserializeBucketResponse(contents.memory);
+    }
+    free(contents.memory);
+    return retval;
+}
+
+bool deleteBucket(char *token) {
+    char url[120];
+    CURLcode res;
+    MemoryStream contents;
+    bool retval;
+
+    sprintf(url, "%s/bucket/%s", BASEURL, token);
+
+    res = dispatchCurl(url, "DELETE", NULL, NULL, NULL, &contents);
+
+    if(checkError(res,contents.memory)) return false;
+    retval = strncmp(contents.memory,"true",4)==0;
+    free(contents.memory);
+    return retval;
+}
+
+BucketResponse getBucket(char *token) {
+    char url[120];
+    char body[120];
+    CURLcode res;
+    MemoryStream contents;
+    BucketResponse retval;
+
+    sprintf(url, "%s/bucket/get", BASEURL);
+    sprintf(body, "{\"bucket_token\":\"%s\"}", token);
+
+    res = dispatchCurl(url, "POST", body, NULL, NULL, &contents);
+    if(!checkError(res, contents.memory)) {
+        retval = deserializeBucketResponse(contents.memory);
+    }
+    free(contents.memory);
+    return retval;
+}
+
 FileResponse uploadFile(FileUpload fileObj) {
     FileResponse retval;
     char *targetUrl;
@@ -302,5 +352,11 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
         retval = CreateFileResponse(token, url, retentionPeriod, retopts);
     };
 
+    return retval;
+}
+
+BucketResponse deserializeBucketResponse(char *body) {
+    //TODO Implement desrializing a bucket response
+    BucketResponse retval;
     return retval;
 }

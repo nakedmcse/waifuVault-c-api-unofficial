@@ -12,6 +12,7 @@
 typedef struct FileUpload {
     char filename[512];
     char url[4096];
+	char bucketToken[80];
     void *buffer;
     long bufferSize;
     char expires[10];
@@ -32,10 +33,18 @@ typedef struct FileOptions {
 
 typedef struct FileResponse {
     char token[80];
+	char bucket[80];
     char url[4096];
     char retentionPeriod[80];
     FileOptions options;
 } FileResponse;
+
+// BucketResponse
+
+typedef struct BucketResponse {
+    char token[80];
+    FileResponse files[1000];
+} BucketResponse;
 
 // ErrorResponse
 

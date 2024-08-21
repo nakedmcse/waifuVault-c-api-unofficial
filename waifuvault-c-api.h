@@ -8,6 +8,9 @@
 void openCurl();
 void closeCurl();
 ErrorResponse *getError();
+BucketResponse createBucket();
+bool deleteBucket(char *token);
+BucketResponse getBucket(char *token);
 FileResponse uploadFile(FileUpload fileObj);
 FileResponse fileInfo(char *token, bool formatted);
 FileResponse fileUpdate(char *token, char *password, char *previousPassword, char *customExpiry, bool hideFilename);
@@ -15,6 +18,7 @@ bool deleteFile(char *token);
 void getFile(FileResponse fileObj, MemoryStream *contents, char *password);
 bool checkError(CURLcode resp, char *body);
 FileResponse deserializeResponse(char *body, bool stringRetention);
+BucketResponse deserializeBucketResponse(char *body);
 char* BuildURL(char *baseURL, FileUpload upload);
 FileUpload CreateFileUpload(char *target, char *expires, char *password, bool hidefilename, bool onetimedownload);
 FileUpload CreateBufferUpload(void *target, long size, char *filename, char *expires, char *password, bool hidefilename, bool onetimedownload);
