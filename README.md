@@ -62,6 +62,9 @@ This API contains 5 interactions:
 3. [Update File Info](#update-file-info)
 4. [Delete File](#delete-file)
 5. [Get File](#get-file)
+6. [Create Bucket](#create-bucket)
+7. [Delete Bucket](#delete-bucket)
+8. [Get Bucket](#get-bucket)
 
 You need to include the header files in your code for the package:
 
@@ -86,15 +89,16 @@ closeCurl();
 
 To Upload a file, use the `uploadFile` function. This function takes the following options as an object:
 
-| Option         | Type         | Description                                                 | Required       | Extra info                       |
-|----------------|--------------|-------------------------------------------------------------|----------------|----------------------------------|
-| `filename`     | `string `    | The path to the file to upload                              | true if File   | File path                        |
-| `url`          | `string`     | The URL of the file to target                               | true if URL    | Filename with extension          |
-| `buffer`       | `byte array` | Byte array containing file to upload                        | true if buffer | Needs filename set also          |
-| `expires`      | `string`     | A string containing a number and a unit (1d = 1day)         | false          | Valid units are `m`, `h` and `d` |
-| `hideFilename` | `boolean`    | If true, then the uploaded filename won't appear in the URL | false          | Defaults to `false`              |
-| `password`     | `string`     | If set, then the uploaded file will be encrypted            | false          |                                  |
-| `oneTimeDownload` | `boolean`          | if supplied, the file will be deleted as soon as it is accessed | false          |                                  |
+| Option            | Type         | Description                                                     | Required       | Extra info                       |
+|-------------------|--------------|-----------------------------------------------------------------|----------------|----------------------------------|
+| `filename`        | `string `    | The path to the file to upload                                  | true if File   | File path                        |
+| `url`             | `string`     | The URL of the file to target                                   | true if URL    | Filename with extension          |
+| `buffer`          | `byte array` | Byte array containing file to upload                            | true if buffer | Needs filename set also          |
+| `bucketToken`     | `string`     | A bucket token to upload to                                     | false          | Use `CreateBucketFileUpload`     |
+| `expires`         | `string`     | A string containing a number and a unit (1d = 1day)             | false          | Valid units are `m`, `h` and `d` |
+| `hideFilename`    | `boolean`    | If true, then the uploaded filename won't appear in the URL     | false          | Defaults to `false`              |
+| `password`        | `string`     | If set, then the uploaded file will be encrypted                | false          |                                  |
+| `oneTimeDownload` | `boolean`    | if supplied, the file will be deleted as soon as it is accessed | false          |                                  |
 
 Using a URL:
 
@@ -115,6 +119,18 @@ FileResponse uploadResponse;
 FileUpload fileUpload;
 
 fileUpload = CreateFileUpload("./acoolfile.png","10m","",false,false);
+uploadResponse = uploadFile(fileUpload);
+printf("URL: %s\n", uploadResponse.url);
+printf("Token: %s\n\n", uploadResponse.token);
+```
+
+Using a file path to a bucket:
+
+```c
+FileResponse uploadResponse;
+FileUpload fileUpload;
+
+fileUpload = CreateBucketFileUpload("./acoolfile.png","some-bucket-token","10m","",false,false);
 uploadResponse = uploadFile(fileUpload);
 printf("URL: %s\n", uploadResponse.url);
 printf("Token: %s\n\n", uploadResponse.token);
@@ -281,4 +297,59 @@ getFile(fileResp, &download, "dangerWaifu");
 printf("Download size: %zu\n\n", download.size);
 // Do something with download.memory
 free(download.memory);
+```
+
+### Create Bucket<a id="create-bucket"></a>
+
+Buckets are virtual collections that are linked to your IP and a token. When you create a bucket, you will receive a bucket token that you can use in Get Bucket to get all the files in that bucket
+
+> **NOTE:** Only one bucket is allowed per client IP address, if you call it more than once, it will return the same bucket token
+
+To create a bucket, use the `createBucket` function. This function does not take any arguments.
+
+```c
+BucketResponse bucketCreate = createBucket();
+
+printf("Bucket token: %s\n", bucketCreate.token);
+```
+
+### Delete Bucket<a id="delete-bucket"></a>
+
+Deleting a bucket will delete the bucket and all the files it contains.
+
+> **IMPORTANT:**  All contained files will be **DELETED** along with the Bucket!
+
+To delete a bucket, you must call the `deleteBucket` function with the following options as parameters:
+
+| Option      | Type      | Description                       | Required | Extra info        |
+|-------------|-----------|-----------------------------------|----------|-------------------|
+| `token`     | `string`  | The token of the bucket to delete | true     |                   |
+
+> **NOTE:** `deleteBucket` will only ever either return `true` or throw an exception if the token is invalid
+
+```c
+bool deleteResponse = deleteBucket("some-bucket-token");
+
+printf("Return: %s\n", deleteResponse ? "True" : "False");
+```
+
+### Get Bucket<a id="get-bucket"></a>
+
+To get the list of files contained in a bucket, you use the `getBucket` function and supply the token.
+This function takes the following options as parameters:
+
+| Option      | Type      | Description             | Required | Extra info        |
+|-------------|-----------|-------------------------|----------|-------------------|
+| `token`     | `string`  | The token of the bucket | true     |                   |
+
+This will respond with the bucket and all the files the bucket contains.
+
+```c
+BucketResponse bucketGet = getBucket(bucketCreate.token);
+
+printf("Bucket token: %s\n", bucketGet.token);
+printf("File: %s\n", bucketGet.files[0].url);
+printf("Token: %s\n", bucketGet.files[0].token);
+printf("File: %s\n", bucketGet.files[1].url);
+printf("Token: %s\n, bucketGet.files[1].token);
 ```

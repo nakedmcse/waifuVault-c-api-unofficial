@@ -21,6 +21,7 @@ FileResponse deserializeResponse(char *body, bool stringRetention);
 BucketResponse deserializeBucketResponse(char *body);
 char* BuildURL(char *baseURL, FileUpload upload);
 FileUpload CreateFileUpload(char *target, char *expires, char *password, bool hidefilename, bool onetimedownload);
+FileUpload CreateBucketFileUpload(char *target, char *bucketToken, char *expires, char *password, bool hidefilename, bool onetimedownload);
 FileUpload CreateBufferUpload(void *target, long size, char *filename, char *expires, char *password, bool hidefilename, bool onetimedownload);
 FileOptions CreateFileOptions(bool hasfilename, bool onetimedownload, bool protected);
 FileResponse CreateFileResponse(char *token, char *url, char *retention, FileOptions options);

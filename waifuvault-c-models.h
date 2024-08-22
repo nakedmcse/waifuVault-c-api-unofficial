@@ -43,7 +43,7 @@ typedef struct FileResponse {
 
 typedef struct BucketResponse {
     char token[80];
-    FileResponse files[1000];
+    FileResponse files[100];
 } BucketResponse;
 
 // ErrorResponse

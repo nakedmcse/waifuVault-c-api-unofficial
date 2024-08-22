@@ -6,6 +6,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
+#include<stddef.h>
 #include<string.h>
 #include<strings.h>
 #include<curl/curl.h>
@@ -47,7 +48,7 @@ ErrorResponse *getError() {
 }
 
 BucketResponse createBucket() {
-    char url[120];
+    char url[512];
     CURLcode res;
     MemoryStream contents;
     BucketResponse retval;
@@ -63,7 +64,7 @@ BucketResponse createBucket() {
 }
 
 bool deleteBucket(char *token) {
-    char url[120];
+    char url[512];
     CURLcode res;
     MemoryStream contents;
     bool retval;
@@ -79,16 +80,18 @@ bool deleteBucket(char *token) {
 }
 
 BucketResponse getBucket(char *token) {
-    char url[120];
-    char body[120];
+    char url[512];
+    char body[512];
+    struct curl_slist *headers = NULL;
     CURLcode res;
     MemoryStream contents;
     BucketResponse retval;
 
+    headers = curl_slist_append(headers, "Content-Type: application/json");
     sprintf(url, "%s/bucket/get", BASEURL);
     sprintf(body, "{\"bucket_token\":\"%s\"}", token);
 
-    res = dispatchCurl(url, "POST", body, NULL, NULL, &contents);
+    res = dispatchCurl(url, "POST", body, NULL, headers, &contents);
     if(!checkError(res, contents.memory)) {
         retval = deserializeBucketResponse(contents.memory);
     }
@@ -99,10 +102,9 @@ BucketResponse getBucket(char *token) {
 FileResponse uploadFile(FileUpload fileObj) {
     FileResponse retval;
     char *targetUrl;
-    void *content;
     CURLcode res;
     MemoryStream contents;
-    char fields[120];
+    char fields[120], initUrl[1024];
     struct curl_httppost *formpost = NULL;
     struct curl_httppost *lastptr = NULL;
 
@@ -111,7 +113,13 @@ FileResponse uploadFile(FileUpload fileObj) {
     contents.size = 0;
     if(!curl) return retval;
 
-    targetUrl = BuildURL(BASEURL, fileObj);
+    strcpy(initUrl, BASEURL);
+    if(strlen(fileObj.bucketToken)>0) {
+        strcat(initUrl,"/");
+        strcat(initUrl,fileObj.bucketToken);
+    }
+
+    targetUrl = BuildURL(initUrl, fileObj);
     if(strlen(fileObj.url)>0) {
         // URL Upload
         strcat(fields, "url=");
@@ -179,8 +187,7 @@ FileResponse fileInfo(char *token, bool formatted) {
     MemoryStream contents;
 
     sprintf(url, "%s/%s?formatted=%s", BASEURL, token, formatted ? "true" : "false");
-    contents.memory = malloc(1);
-    contents.size = 0;
+
     res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
     if(!checkError(res,contents.memory)) {
         retval = deserializeResponse(contents.memory, formatted);
@@ -301,6 +308,7 @@ bool checkError(CURLcode resp, char *body) {
 
 FileResponse deserializeResponse(char *body, bool stringRetention) {
     char token[80];
+    char bucket[80];
     char url[120];
     char retentionPeriod[80];
     int retentionPeriodInt;
@@ -320,6 +328,7 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
 
     struct json_attr_t rStr_attrs[] = {
         {"token", t_string, .addr.string = token, .len = sizeof(token)},
+        {"bucket", t_string, .addr.string = bucket, .len = sizeof(bucket)},
         {"url", t_string, .addr.string = url, .len = sizeof(url)},
         {"retentionPeriod", t_string, .addr.string = retentionPeriod, .len = sizeof(retentionPeriod)},
         {"options", t_object, .addr.attrs = options_attrs},
@@ -328,6 +337,7 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
 
     struct json_attr_t rInt_attrs[] = {
         {"token", t_string, .addr.string = token, .len = sizeof(token)},
+        {"bucket", t_string, .addr.string = bucket, .len = sizeof(bucket)},
         {"url", t_string, .addr.string = url, .len = sizeof(url)},
         {"retentionPeriod", t_integer, .addr.integer = &retentionPeriodInt},
         {"options", t_object, .addr.attrs = options_attrs},
@@ -356,7 +366,39 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
 }
 
 BucketResponse deserializeBucketResponse(char *body) {
-    //TODO Implement desrializing a bucket response
+    int jsonStatus = 0, files_count = 0;
     BucketResponse retval;
+
+    struct json_attr_t options_attrs[] = {
+        {"hideFilename", t_ignore},
+        {"oneTimeDownload", t_ignore},
+        {"protected", t_ignore},
+        {NULL}
+    };
+
+    struct json_attr_t files_attrs[] = {
+        {"token", t_string, STRUCTOBJECT(struct FileResponse, token), .len = sizeof(retval.files[0].token)},
+        {"bucket", t_string, STRUCTOBJECT(struct FileResponse, bucket), .len = sizeof(retval.files[0].bucket)},
+        {"url", t_string, STRUCTOBJECT(struct FileResponse, url), .len = sizeof(retval.files[0].url)},
+        {"retentionPeriod", t_ignore},
+        {"options", t_object, .addr.attrs = options_attrs},
+        {NULL}
+    };
+
+    struct json_attr_t bucket_attrs[] = {
+        {"token", t_string, .addr.string = retval.token, .len = sizeof(retval.token)},
+        {"files", t_array, STRUCTARRAY(retval.files, files_attrs, &files_count)},
+        {NULL}
+    };
+
+    memset(&retval.files, '\0', sizeof(retval.files));
+
+    jsonStatus = json_read_object(body, bucket_attrs, NULL);
+    if(jsonStatus!=0) {
+        fprintf(stderr, "json deserialize failed: %s\n", json_error_string(jsonStatus));
+        fprintf(stderr, "raw body: %s\n", body);
+        fprintf(stderr, "body size: %lu\n", strlen(body));
+    };
+
     return retval;
 }
