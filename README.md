@@ -55,7 +55,7 @@ if(err) {
 
 ## Usage
 
-This API contains 5 interactions:
+This API contains 8 interactions:
 
 1. [Upload File](#upload-file)
 2. [Get File Info](#get-file-info)
