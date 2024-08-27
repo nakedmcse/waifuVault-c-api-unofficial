@@ -54,6 +54,19 @@ typedef struct ErrorResponse {
     char message[4096];
 } ErrorResponse;
 
+// Restriction
+
+typedef struct Restriction {
+    char type[80];
+    char value[512];
+} Restriction;
+
+// Restriction Response
+
+typedef struct RestrictionResponse {
+    Restriction restrictions[100];
+} RestrictionResponse;
+
 // Memory Stream for curl
 
 typedef struct MemoryStream {

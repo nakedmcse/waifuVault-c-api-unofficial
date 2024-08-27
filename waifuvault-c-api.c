@@ -15,6 +15,7 @@
 
 static CURL *curl;
 static ErrorResponse *error;
+static RestrictionResponse restrictions;
 
 void openCurl() {
     curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -45,6 +46,36 @@ CURLcode dispatchCurl(char *targetUrl, char *targetMethod, char *fields, struct 
 
 ErrorResponse *getError() {
     return error;
+}
+
+RestrictionResponse getRestrictions() {
+    char url[512];
+    CURLcode res;
+    MemoryStream contents;
+    RestrictionResponse retval;
+
+    sprintf(url, "%s/resources/restrictions", BASEURL);
+
+    res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
+    if(!checkError(res, contents.memory)) {
+        retval = deserializeRestrictionResponse(contents.memory);
+    }
+    free(contents.memory);
+    for(int i = 0; i < 100; i++) {
+        restrictions.restrictions[i] = retval.restrictions[i];
+    }
+    return retval;
+}
+
+RestrictionResponse clearRestrictions() {
+    RestrictionResponse retval;
+    for(int i = 0; i < 100; i++) {
+        strcpy(restrictions.restrictions[i].type,"");
+        strcpy(restrictions.restrictions[i].value,"");
+        strcpy(retval.restrictions[i].type,"");
+        strcpy(retval.restrictions[i].value,"");
+    }
+    return retval;
 }
 
 BucketResponse createBucket() {
@@ -306,6 +337,11 @@ bool checkError(CURLcode resp, char *body) {
     return false;
 }
 
+void checkError(FileUpload fileObj) {
+    // TODO Implement restrictions check
+    return;
+}
+
 FileResponse deserializeResponse(char *body, bool stringRetention) {
     char token[80];
     char bucket[80];
@@ -399,6 +435,15 @@ BucketResponse deserializeBucketResponse(char *body) {
         fprintf(stderr, "raw body: %s\n", body);
         fprintf(stderr, "body size: %lu\n", strlen(body));
     };
+
+    return retval;
+}
+
+RestrictionResponse deserializeRestrictionResponse(char *body) {
+    int jsonStatus = 0, restriction_count = 0;
+    RestrictionResponse retval;
+
+    // TODO Implement restriction response deserialization
 
     return retval;
 }

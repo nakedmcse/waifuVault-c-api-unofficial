@@ -8,6 +8,8 @@
 void openCurl();
 void closeCurl();
 ErrorResponse *getError();
+RestrictionResponse getRestrictions();
+RestrictionResponse clearRestrictions();
 BucketResponse createBucket();
 bool deleteBucket(char *token);
 BucketResponse getBucket(char *token);
@@ -19,6 +21,7 @@ void getFile(FileResponse fileObj, MemoryStream *contents, char *password);
 bool checkError(CURLcode resp, char *body);
 FileResponse deserializeResponse(char *body, bool stringRetention);
 BucketResponse deserializeBucketResponse(char *body);
+RestrictionResponse deserializeRestrictionResponse(char *body);
 char* BuildURL(char *baseURL, FileUpload upload);
 FileUpload CreateFileUpload(char *target, char *expires, char *password, bool hidefilename, bool onetimedownload);
 FileUpload CreateBucketFileUpload(char *target, char *bucketToken, char *expires, char *password, bool hidefilename, bool onetimedownload);
