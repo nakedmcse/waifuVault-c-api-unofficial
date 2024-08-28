@@ -48,14 +48,14 @@ if(err) {
     printf("Error Status: %d\n", err->status);
     printf("Error Name: %s\n", err->name);
     printf("Error Message: %s\n\n", err->message);
-    free(err);
+    clear(Error)
     exit(1);
 }
 ```
 
 ## Usage
 
-This API contains 8 interactions:
+This API contains 10 interactions:
 
 1. [Upload File](#upload-file)
 2. [Get File Info](#get-file-info)
@@ -65,6 +65,8 @@ This API contains 8 interactions:
 6. [Create Bucket](#create-bucket)
 7. [Delete Bucket](#delete-bucket)
 8. [Get Bucket](#get-bucket)
+9. [Get Restrictions](#get-restrictions)
+10. [Clear Restrictions](#clear-restrictions)
 
 You need to include the header files in your code for the package:
 
@@ -100,6 +102,8 @@ To Upload a file, use the `uploadFile` function. This function takes the followi
 | `password`        | `string`     | If set, then the uploaded file will be encrypted                | false          |                                  |
 | `oneTimeDownload` | `boolean`    | if supplied, the file will be deleted as soon as it is accessed | false          |                                  |
 
+> **NOTE:** If you use `getRestrictions` then server restrictions are checked by the SDK client side *before* upload, and will raise an error if they are violated
+
 Using a URL:
 
 ```c
@@ -108,8 +112,17 @@ FileUpload urlUpload;
 
 urlUpload = CreateFileUpload("https://waifuvault.moe/assets/custom/images/08.png","10m","",false,false);
 uploadResponse = uploadFile(urlUpload);
-printf("URL: %s\n", uploadResponse.url);
-printf("Token: %s\n\n", uploadResponse.token);
+
+err = getError();
+if(err) {
+    printf("Error Status: %d\n", err->status);
+    printf("Error Name: %s\n", err->name);
+    printf("Error Message: %s\n\n", err->message);
+    clearError();
+} else {
+    printf("URL: %s\n", uploadResponse.url);
+    printf("Token: %s\n\n", uploadResponse.token);
+}
 ```
 
 Using a file path:
@@ -120,8 +133,17 @@ FileUpload fileUpload;
 
 fileUpload = CreateFileUpload("./acoolfile.png","10m","",false,false);
 uploadResponse = uploadFile(fileUpload);
-printf("URL: %s\n", uploadResponse.url);
-printf("Token: %s\n\n", uploadResponse.token);
+
+err = getError();
+if(err) {
+    printf("Error Status: %d\n", err->status);
+    printf("Error Name: %s\n", err->name);
+    printf("Error Message: %s\n\n", err->message);
+    clearError();
+} else {
+    printf("URL: %s\n", uploadResponse.url);
+    printf("Token: %s\n\n", uploadResponse.token);
+}
 ```
 
 Using a file path to a bucket:
@@ -132,8 +154,17 @@ FileUpload fileUpload;
 
 fileUpload = CreateBucketFileUpload("./acoolfile.png","some-bucket-token","10m","",false,false);
 uploadResponse = uploadFile(fileUpload);
-printf("URL: %s\n", uploadResponse.url);
-printf("Token: %s\n\n", uploadResponse.token);
+
+err = getError();
+if(err) {
+    printf("Error Status: %d\n", err->status);
+    printf("Error Name: %s\n", err->name);
+    printf("Error Message: %s\n\n", err->message);
+    clearError();
+} else {
+    printf("URL: %s\n", uploadResponse.url);
+    printf("Token: %s\n\n", uploadResponse.token);
+}
 ```
 
 Using a buffer:
@@ -172,8 +203,17 @@ bufferUpload = CreateBufferUpload(buffer,fileLen,"acoolfile.png","10m","",false,
 uploadResponse = uploadFile(bufferUpload);
 free(buffer);
 fclose(file);
-printf("URL: %s\n", uploadResponse.url);
-printf("Token: %s\n\n", uploadResponse.token);
+
+err = getError();
+if(err) {
+    printf("Error Status: %d\n", err->status);
+    printf("Error Name: %s\n", err->name);
+    printf("Error Message: %s\n\n", err->message);
+    clearError();
+} else {
+    printf("URL: %s\n", uploadResponse.url);
+    printf("Token: %s\n\n", uploadResponse.token);
+}
 ```
 
 ### Get File Info<a id="get-file-info"></a>
@@ -352,4 +392,38 @@ printf("File: %s\n", bucketGet.files[0].url);
 printf("Token: %s\n", bucketGet.files[0].token);
 printf("File: %s\n", bucketGet.files[1].url);
 printf("Token: %s\n, bucketGet.files[1].token);
+```
+
+### Get Restrictions<a id="get-restrictions"></a>
+
+To get the list of restrictions applied to the server, you use the `getRestrictions` function.
+
+This will respond with an array of name, value entries describing the restrictions applied to the server.
+
+> **NOTE:** This loads the server restrictions into the SDK and they will be validated client side before attempting to send
+
+```c
+RestrictionResponse restrictions;
+
+// Get Restrictions
+restrictions = getRestrictions();
+printf("--GET RESTRICTIONS COMPLETED--\n");
+printf("Restriction 1: %s, %s\n", restrictions.restrictions[0].type, restrictions.restrictions[0].value);
+printf("Restriction 2: %s, %s\n", restrictions.restrictions[1].type, restrictions.restrictions[1].value);
+```
+
+### Clear Restrictions<a id="clear-restrictions"></a>
+
+To clear the loaded restrictions in the SDK, you use the `clearRestrictions` function.
+
+This will remove the loaded restrictions and the SDK will no longer validate client side.
+
+```c
+RestrictionResponse restrictions;
+
+// Clear Restrictions
+restrictions = clearRestrictions();
+printf("--CLEAR RESTRICTIONS COMPLETED--\n");
+printf("Restriction 1: %s, %s\n", restrictions.restrictions[0].type, restrictions.restrictions[0].value);
+printf("Restriction 2: %s, %s\n", restrictions.restrictions[1].type, restrictions.restrictions[1].value);
 ```
