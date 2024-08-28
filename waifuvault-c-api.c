@@ -8,6 +8,7 @@
 #include<stdbool.h>
 #include<stddef.h>
 #include<string.h>
+#include<sys/stat.h>
 #include<strings.h>
 #include<curl/curl.h>
 
@@ -46,6 +47,11 @@ CURLcode dispatchCurl(char *targetUrl, char *targetMethod, char *fields, struct 
 
 ErrorResponse *getError() {
     return error;
+}
+
+void clearError() {
+    free(error);
+    error = NULL;
 }
 
 RestrictionResponse getRestrictions() {
@@ -143,6 +149,8 @@ FileResponse uploadFile(FileUpload fileObj) {
     contents.memory = malloc(1);
     contents.size = 0;
     if(!curl) return retval;
+
+    if(checkRestrictions(fileObj)) return retval;
 
     strcpy(initUrl, BASEURL);
     if(strlen(fileObj.bucketToken)>0) {
@@ -327,7 +335,7 @@ bool checkError(CURLcode resp, char *body) {
             return true;
         };
 
-        error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
+        if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
         error->status = status;
         strcpy(error->name, name);
         strcpy(error->message, message);
@@ -337,9 +345,47 @@ bool checkError(CURLcode resp, char *body) {
     return false;
 }
 
-void checkError(FileUpload fileObj) {
-    // TODO Implement restrictions check
-    return;
+bool checkRestrictions(FileUpload fileObj) {
+    long filesize, maxsize = 0;
+    struct stat stats;
+    char *endptr, *ext, *filemime;
+
+    if(strlen(fileObj.url)==0) {
+        if(strlen(fileObj.filename)>0 && fileObj.buffer==NULL) {
+            //File Upload
+            stat(expandHomedir(fileObj.filename), &stats);
+            filesize = stats.st_size;
+        } else {
+            //Buffer Upload
+            filesize = fileObj.bufferSize;
+        }
+
+        for(int i=0; i<100; i++) {
+            if(strlen(restrictions.restrictions[i].type)==0) break;
+            if(strcmp(restrictions.restrictions[i].type, "MAX_FILE_SIZE") == 0) {
+                maxsize = strtol(restrictions.restrictions[i].value, &endptr, 10);
+                if(filesize > maxsize) {
+                    if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
+                    error->status = 0;
+                    strcpy(error->name, "Restriction Error");
+                    strcpy(error->message, "File size greater than maximum allowed by server");
+                    return true;
+                }
+            }
+            else if(strcmp(restrictions.restrictions[i].type,"BANNED_MIME_TYPE")==0) {
+                ext = fileExtension(fileObj.filename);
+                filemime = getMime(ext);
+                if(strstr(restrictions.restrictions[i].value,filemime) != NULL) {
+                    if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
+                    error->status = 0;
+                    strcpy(error->name, "Restriction Error");
+                    strcpy(error->message, "File mime type not allowed by server");
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 FileResponse deserializeResponse(char *body, bool stringRetention) {
@@ -352,6 +398,7 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
     bool hasFilename;
     bool oneTimeDownload;
     bool protected;
+    char *adjustedBody = (char *)malloc(strlen(body)+100);
     FileResponse retval;
     FileOptions retopts;
 
@@ -380,7 +427,25 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
         {NULL}
     };
 
-    jsonStatus = json_read_object(body, stringRetention ? rStr_attrs : rInt_attrs, NULL);
+    // Fix :null to :"null"
+    adjustedBody[0] = 0;
+    for(int i=0; i<strlen(body); i++) {
+        if (body[i] == 'n' && body[i-1] == ':') {
+            strcat(adjustedBody, "\"n");
+        }
+        else if (body[i] == ',' && body[i-1] == 'l') {
+            strcat(adjustedBody, "\",");
+        }
+        else {
+            char tmp[2];
+            tmp[0] = body[i];
+            tmp[1] = 0;
+            strcat(adjustedBody, tmp);
+        }
+    }
+
+    jsonStatus = json_read_object(adjustedBody, stringRetention ? rStr_attrs : rInt_attrs, NULL);
+    free(adjustedBody);
     if(jsonStatus!=0) {
         fprintf(stderr, "json deserialize failed: %s\n", json_error_string(jsonStatus));
         fprintf(stderr, "raw body: %s\n", body);
@@ -389,13 +454,15 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
 
     if(jsonStatus==0 && stringRetention) {
         retopts = CreateFileOptions(hasFilename, oneTimeDownload, protected);
-        retval = CreateFileResponse(token, url, retentionPeriod, retopts);
+        if (strcmp(bucket, "null")==0) strcpy(bucket, "");
+        retval = CreateFileResponse(token, bucket, url, retentionPeriod, retopts);
     };
 
     if(jsonStatus==0 && !stringRetention) {
         retopts = CreateFileOptions(hasFilename, oneTimeDownload, protected);
         sprintf(retentionPeriod, "%d", retentionPeriodInt);
-        retval = CreateFileResponse(token, url, retentionPeriod, retopts);
+        if (strcmp(bucket, "null")==0) strcpy(bucket, "");
+        retval = CreateFileResponse(token, bucket, url, retentionPeriod, retopts);
     };
 
     return retval;
@@ -441,9 +508,46 @@ BucketResponse deserializeBucketResponse(char *body) {
 
 RestrictionResponse deserializeRestrictionResponse(char *body) {
     int jsonStatus = 0, restriction_count = 0;
+    char *adjustedBody = (char *)malloc(strlen(body)+100);
     RestrictionResponse retval;
 
-    // TODO Implement restriction response deserialization
+    struct json_attr_t restriction_attrs[] = {
+        {"type", t_string, STRUCTOBJECT(struct Restriction, type), .len = sizeof(retval.restrictions[0].type)},
+        {"value", t_string, STRUCTOBJECT(struct Restriction, value), .len = sizeof(retval.restrictions[0].value)},
+        {NULL}
+    };
 
+    struct json_attr_t restrictions_attrs[] = {
+        {"restrictions", t_array, STRUCTARRAY(retval.restrictions, restriction_attrs, &restriction_count)},
+        {NULL}
+    };
+
+    strcpy(adjustedBody, "{\"restrictions\":");
+    for(int i=0; i<strlen(body); i++) {
+        if (body[i] == ':' && body[i+1] != '"') {
+            strcat(adjustedBody, ":\"");
+        }
+        else if (body[i] == '}' && body[i-1] != '"') {
+            strcat(adjustedBody, "\"}");
+        }
+        else {
+            char tmp[2];
+            tmp[0] = body[i];
+            tmp[1] = 0;
+            strcat(adjustedBody, tmp);
+        }
+    }
+    strcat(adjustedBody, "}");
+
+    memset(&retval.restrictions, '\0', sizeof(retval.restrictions));
+
+    jsonStatus = json_read_object(adjustedBody, restrictions_attrs, NULL);
+    if(jsonStatus!=0) {
+        fprintf(stderr, "json deserialize failed: %s\n", json_error_string(jsonStatus));
+        fprintf(stderr, "raw body: %s\n", body);
+        fprintf(stderr, "body size: %lu\n", strlen(body));
+    };
+
+    free(adjustedBody);
     return retval;
 }

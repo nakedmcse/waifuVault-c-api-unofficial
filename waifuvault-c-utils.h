@@ -23,6 +23,29 @@ char* expandHomedir(const char* path) {
     return new_path;
 }
 
+// Get File Extension
+
+char *fileExtension(const char *filename) {
+    char *afterDot = strchr(filename, '.');
+    if(afterDot == NULL || afterDot == filename) return "";
+    return afterDot;
+}
+
+// Get Mime Type
+
+char *getMime(const char *ext) {
+    int i = 0;
+
+    while(mimes[i].ext != NULL) {
+        if(strcmp(ext, mimes[i].ext) == 0) {
+            return mimes[i].mime;
+        }
+        i++;
+    }
+
+    return mimes[i].mime;  // NULL contains default
+}
+
 // Builder helper functions
 
 char* BuildURL(char *baseURL, FileUpload upload) {
@@ -57,13 +80,16 @@ FileUpload CreateFileUpload(char *target, char *expires, char *password, bool hi
     retval.buffer = NULL;
     strcpy(retval.expires,expires);
     strcpy(retval.password,password);
+    strcpy(retval.bucketToken, "");
     if(strncasecmp(target, "http://", 7) == 0 || strncasecmp(target, "https://", 8) == 0) {
         // Url
         strcpy(retval.url, target);
+        strcpy(retval.filename, "");
     }
     else {
         // Filename
         strcpy(retval.filename, target);
+        strcpy(retval.url, "");
     }
     return retval;
 }
@@ -79,10 +105,12 @@ FileUpload CreateBucketFileUpload(char *target, char *bucketToken, char *expires
     if(strncasecmp(target, "http://", 7) == 0 || strncasecmp(target, "https://", 8) == 0) {
         // Url
         strcpy(retval.url, target);
+        strcpy(retval.filename, "");
     }
     else {
         // Filename
         strcpy(retval.filename, target);
+        strcpy(retval.url, "");
     }
     return retval;
 }
@@ -96,6 +124,8 @@ FileUpload CreateBufferUpload(void *target, long size, char *filename, char *exp
     strcpy(retval.expires,expires);
     strcpy(retval.password,password);
     strcpy(retval.filename,filename);
+    strcpy(retval.url, "");
+    strcpy(retval.bucketToken, "");
     return retval;
 }
 
@@ -107,9 +137,10 @@ FileOptions CreateFileOptions(bool hasfilename, bool onetimedownload, bool prote
     return retval;
 }
 
-FileResponse CreateFileResponse(char *token, char *url, char *retention, FileOptions options) {
+FileResponse CreateFileResponse(char *token, char *bucket, char *url, char *retention, FileOptions options) {
     FileResponse retval;
     if(token != NULL) strcpy(retval.token, token);
+    if(bucket != NULL) strcpy(retval.bucket, bucket);
     if(url != NULL) strcpy(retval.url, url);
     if(retention != NULL) strcpy(retval.retentionPeriod, retention);
     retval.options = options;
