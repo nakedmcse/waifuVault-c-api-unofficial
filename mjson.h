@@ -7,6 +7,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <ctype.h>
+
+#ifndef MJSON
+#define MJSON
+
 #ifdef TIME_ENABLE
 #include <time.h>
 #endif /* TIME_ENABLE */
@@ -157,3 +161,4 @@ void json_enable_debug(int, FILE *);
 	.addr.array.maxlen = (int)(sizeof(a)/sizeof(a[0]))
 
 /* json.h ends here */
+#endif

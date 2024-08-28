@@ -18,6 +18,7 @@ static CURL *curl;
 static ErrorResponse *error;
 static RestrictionResponse restrictions;
 
+// CURL Handling
 void openCurl() {
     curl_global_init(CURL_GLOBAL_DEFAULT);
     curl = curl_easy_init();
@@ -45,6 +46,7 @@ CURLcode dispatchCurl(char *targetUrl, char *targetMethod, char *fields, struct 
     return curl_easy_perform(curl);
 }
 
+// Error Handling
 ErrorResponse *getError() {
     return error;
 }
@@ -54,6 +56,47 @@ void clearError() {
     error = NULL;
 }
 
+bool checkError(CURLcode resp, char *body) {
+    char name[80];
+    char message[512];
+    int status = 0;
+    int jsonStatus = 0;
+    long http_code = 0;
+
+    struct json_attr_t error_attrs[] = {
+        {"name", t_string, .addr.string = name, .len = sizeof(name)},
+        {"status", t_integer, .addr.integer = &status},
+        {"message", t_string, .addr.string = message, .len = sizeof(message)},
+        {NULL}
+    };
+
+    if(resp != CURLE_OK) {
+        fprintf(stderr, "curl failed: %s\n", curl_easy_strerror(resp));
+        return true;
+    }
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+    if(http_code >= 400) {
+        fprintf(stderr, "http code error: %d\n", (int)http_code);
+
+        jsonStatus = json_read_object(body, error_attrs, NULL);
+        if(jsonStatus!=0) {
+            fprintf(stderr, "json deserialize failed: %s\n", json_error_string(jsonStatus));
+            fprintf(stderr, "raw body: %s\n", body);
+            fprintf(stderr, "body size: %d\n", strlen(body));
+            return true;
+        };
+
+        if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
+        error->status = status;
+        strcpy(error->name, name);
+        strcpy(error->message, message);
+
+        return true;
+    }
+    return false;
+}
+
+// Restrictions
 RestrictionResponse getRestrictions() {
     char url[512];
     CURLcode res;
@@ -84,6 +127,50 @@ RestrictionResponse clearRestrictions() {
     return retval;
 }
 
+bool checkRestrictions(FileUpload fileObj) {
+    long filesize, maxsize = 0;
+    struct stat stats;
+    char *endptr, *ext, *filemime;
+
+    if(strlen(fileObj.url)==0) {
+        if(strlen(fileObj.filename)>0 && fileObj.buffer==NULL) {
+            //File Upload
+            stat(expandHomedir(fileObj.filename), &stats);
+            filesize = stats.st_size;
+        } else {
+            //Buffer Upload
+            filesize = fileObj.bufferSize;
+        }
+
+        for(int i=0; i<100; i++) {
+            if(strlen(restrictions.restrictions[i].type)==0) break;
+            if(strcmp(restrictions.restrictions[i].type, "MAX_FILE_SIZE") == 0) {
+                maxsize = strtol(restrictions.restrictions[i].value, &endptr, 10);
+                if(filesize > maxsize) {
+                    if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
+                    error->status = 1;
+                    strcpy(error->name, "Restriction Error");
+                    strcpy(error->message, "File size greater than maximum allowed by server");
+                    return true;
+                }
+            }
+            else if(strcmp(restrictions.restrictions[i].type,"BANNED_MIME_TYPE")==0) {
+                ext = fileExtension(fileObj.filename);
+                filemime = getMime(ext);
+                if(strstr(restrictions.restrictions[i].value,filemime) != NULL) {
+                    if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
+                    error->status = 1;
+                    strcpy(error->name, "Restriction Error");
+                    strcpy(error->message, "File mime type not allowed by server");
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+// Buckets
 BucketResponse createBucket() {
     char url[512];
     CURLcode res;
@@ -136,6 +223,7 @@ BucketResponse getBucket(char *token) {
     return retval;
 }
 
+// Files
 FileResponse uploadFile(FileUpload fileObj) {
     FileResponse retval;
     char *targetUrl;
@@ -305,89 +393,7 @@ void getFile(FileResponse fileObj, MemoryStream *contents, char *password) {
     if(checkError(res,contents->memory)) return;
 }
 
-bool checkError(CURLcode resp, char *body) {
-    char name[80];
-    char message[512];
-    int status = 0;
-    int jsonStatus = 0;
-    long http_code = 0;
-
-    struct json_attr_t error_attrs[] = {
-        {"name", t_string, .addr.string = name, .len = sizeof(name)},
-        {"status", t_integer, .addr.integer = &status},
-        {"message", t_string, .addr.string = message, .len = sizeof(message)},
-        {NULL}
-    };
-
-    if(resp != CURLE_OK) {
-        fprintf(stderr, "curl failed: %s\n", curl_easy_strerror(resp));
-        return true;
-    }
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-    if(http_code >= 400) {
-        fprintf(stderr, "http code error: %d\n", (int)http_code);
-
-        jsonStatus = json_read_object(body, error_attrs, NULL);
-        if(jsonStatus!=0) {
-            fprintf(stderr, "json deserialize failed: %s\n", json_error_string(jsonStatus));
-            fprintf(stderr, "raw body: %s\n", body);
-            fprintf(stderr, "body size: %d\n", strlen(body));
-            return true;
-        };
-
-        if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
-        error->status = status;
-        strcpy(error->name, name);
-        strcpy(error->message, message);
-
-        return true;
-    }
-    return false;
-}
-
-bool checkRestrictions(FileUpload fileObj) {
-    long filesize, maxsize = 0;
-    struct stat stats;
-    char *endptr, *ext, *filemime;
-
-    if(strlen(fileObj.url)==0) {
-        if(strlen(fileObj.filename)>0 && fileObj.buffer==NULL) {
-            //File Upload
-            stat(expandHomedir(fileObj.filename), &stats);
-            filesize = stats.st_size;
-        } else {
-            //Buffer Upload
-            filesize = fileObj.bufferSize;
-        }
-
-        for(int i=0; i<100; i++) {
-            if(strlen(restrictions.restrictions[i].type)==0) break;
-            if(strcmp(restrictions.restrictions[i].type, "MAX_FILE_SIZE") == 0) {
-                maxsize = strtol(restrictions.restrictions[i].value, &endptr, 10);
-                if(filesize > maxsize) {
-                    if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
-                    error->status = 0;
-                    strcpy(error->name, "Restriction Error");
-                    strcpy(error->message, "File size greater than maximum allowed by server");
-                    return true;
-                }
-            }
-            else if(strcmp(restrictions.restrictions[i].type,"BANNED_MIME_TYPE")==0) {
-                ext = fileExtension(fileObj.filename);
-                filemime = getMime(ext);
-                if(strstr(restrictions.restrictions[i].value,filemime) != NULL) {
-                    if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
-                    error->status = 0;
-                    strcpy(error->name, "Restriction Error");
-                    strcpy(error->message, "File mime type not allowed by server");
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
+// Deserializers
 FileResponse deserializeResponse(char *body, bool stringRetention) {
     char token[80];
     char bucket[80];
