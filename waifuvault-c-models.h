@@ -1,8 +1,5 @@
 // Waifuvault C SDK Models
 #include<stdbool.h>
-#include<string.h>
-#include<strings.h>
-#include<stdio.h>
 #include<stdlib.h>
 
 #ifndef WAIFUVAULT_C_MODELS
@@ -73,6 +70,8 @@ typedef struct MimeMap {
     char *ext;
     char *mime;
 } MimeMap;
+
+// List from https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
 
 static MimeMap mimes[] = {
     {".aac", "audio/aac"},

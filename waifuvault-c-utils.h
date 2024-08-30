@@ -1,4 +1,4 @@
-// Waifuvault C Utility Functions
+// Waifuvault C SDK Utility Functions
 #include<stdbool.h>
 #include<string.h>
 #include<strings.h>
