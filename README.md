@@ -16,7 +16,7 @@ The SDK uses the microjson library for json parsing, as well as itself.  First b
 of the repo.
 
 ```sh
-./build.sh
+make sdk
 ```
 
 This will give you mjson.o and waifuvault-c-api.o.  You will need both .o files and the header files for both the models and the api.  These get added as include lines at the top.

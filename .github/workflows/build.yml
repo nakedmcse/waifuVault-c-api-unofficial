@@ -20,4 +20,4 @@ jobs:
       with:
         version: latest
     - name: Build libraries
-      run: gcc -w -c mjson.c -c waifuvault-c-api.c
+      run: make sdk
