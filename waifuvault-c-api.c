@@ -10,7 +10,6 @@
 #include<stddef.h>
 #include<string.h>
 #include<sys/stat.h>
-#include<strings.h>
 #include<curl/curl.h>
 
 #define BASEURL "https://waifuvault.moe/rest"
@@ -61,7 +60,6 @@ bool checkError(CURLcode resp, char *body) {
     char name[80];
     char message[512];
     int status = 0;
-    int jsonStatus = 0;
     long http_code = 0;
 
     struct json_attr_t error_attrs[] = {
@@ -79,7 +77,7 @@ bool checkError(CURLcode resp, char *body) {
     if(http_code >= 400) {
         fprintf(stderr, "http code error: %d\n", (int)http_code);
 
-        jsonStatus = json_read_object(body, error_attrs, NULL);
+        const int jsonStatus = json_read_object(body, error_attrs, NULL);
         if(jsonStatus!=0) {
             fprintf(stderr, "json deserialize failed: %s\n", json_error_string(jsonStatus));
             fprintf(stderr, "raw body: %s\n", body);
@@ -100,13 +98,12 @@ bool checkError(CURLcode resp, char *body) {
 // Restrictions
 RestrictionResponse getRestrictions() {
     char url[512];
-    CURLcode res;
     MemoryStream contents;
     RestrictionResponse retval;
 
     sprintf(url, "%s/resources/restrictions", BASEURL);
 
-    res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
+    const CURLcode res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
     if(!checkError(res, contents.memory)) {
         retval = deserializeRestrictionResponse(contents.memory);
     }
@@ -129,7 +126,7 @@ RestrictionResponse clearRestrictions() {
 }
 
 bool checkRestrictions(FileUpload fileObj) {
-    long filesize, maxsize = 0;
+    long filesize = 0;
     struct stat stats;
     char *endptr, *ext, *filemime;
 
@@ -146,7 +143,7 @@ bool checkRestrictions(FileUpload fileObj) {
         for(int i=0; i<100; i++) {
             if(strlen(restrictions.restrictions[i].type)==0) break;
             if(strcmp(restrictions.restrictions[i].type, "MAX_FILE_SIZE") == 0) {
-                maxsize = strtol(restrictions.restrictions[i].value, &endptr, 10);
+                const long maxsize = strtol(restrictions.restrictions[i].value, &endptr, 10);
                 if(filesize > maxsize) {
                     if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
                     error->status = 1;
@@ -174,13 +171,12 @@ bool checkRestrictions(FileUpload fileObj) {
 // Buckets
 BucketResponse createBucket() {
     char url[512];
-    CURLcode res;
     MemoryStream contents;
     BucketResponse retval;
 
     sprintf(url, "%s/bucket/create", BASEURL);
 
-    res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
+    const CURLcode res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
     if(!checkError(res, contents.memory)) {
         retval = deserializeBucketResponse(contents.memory);
     }
@@ -190,16 +186,14 @@ BucketResponse createBucket() {
 
 bool deleteBucket(char *token) {
     char url[512];
-    CURLcode res;
     MemoryStream contents;
-    bool retval;
 
     sprintf(url, "%s/bucket/%s", BASEURL, token);
 
-    res = dispatchCurl(url, "DELETE", NULL, NULL, NULL, &contents);
+    const CURLcode res = dispatchCurl(url, "DELETE", NULL, NULL, NULL, &contents);
 
     if(checkError(res,contents.memory)) return false;
-    retval = strncmp(contents.memory,"true",4)==0;
+    const bool retval = strncmp(contents.memory,"true",4)==0;
     free(contents.memory);
     return retval;
 }
@@ -208,7 +202,6 @@ BucketResponse getBucket(char *token) {
     char url[512];
     char body[512];
     struct curl_slist *headers = NULL;
-    CURLcode res;
     MemoryStream contents;
     BucketResponse retval;
 
@@ -216,7 +209,7 @@ BucketResponse getBucket(char *token) {
     sprintf(url, "%s/bucket/get", BASEURL);
     sprintf(body, "{\"bucket_token\":\"%s\"}", token);
 
-    res = dispatchCurl(url, "POST", body, NULL, headers, &contents);
+    const CURLcode res = dispatchCurl(url, "POST", body, NULL, headers, &contents);
     if(!checkError(res, contents.memory)) {
         retval = deserializeBucketResponse(contents.memory);
     }
@@ -227,7 +220,6 @@ BucketResponse getBucket(char *token) {
 // Files
 FileResponse uploadFile(FileUpload fileObj) {
     FileResponse retval;
-    char *targetUrl;
     CURLcode res;
     MemoryStream contents;
     char fields[120], initUrl[1024];
@@ -247,7 +239,7 @@ FileResponse uploadFile(FileUpload fileObj) {
         strcat(initUrl,fileObj.bucketToken);
     }
 
-    targetUrl = BuildURL(initUrl, fileObj);
+    char *targetUrl = BuildURL(initUrl, fileObj);
     if(strlen(fileObj.url)>0) {
         // URL Upload
         strcat(fields, "url=");
@@ -311,12 +303,11 @@ FileResponse uploadFile(FileUpload fileObj) {
 FileResponse fileInfo(char *token, bool formatted) {
     FileResponse retval;
     char url[120];
-    CURLcode res;
     MemoryStream contents;
 
     sprintf(url, "%s/%s?formatted=%s", BASEURL, token, formatted ? "true" : "false");
 
-    res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
+    const CURLcode res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
     if(!checkError(res,contents.memory)) {
         retval = deserializeResponse(contents.memory, formatted);
     }
@@ -328,7 +319,6 @@ FileResponse fileUpdate(char *token, char *password, char *previousPassword, cha
     FileResponse retval;
     char url[120];
     char fields[120];
-    CURLcode res;
     MemoryStream contents;
     struct curl_slist *headers = NULL;
 
@@ -345,7 +335,7 @@ FileResponse fileUpdate(char *token, char *password, char *previousPassword, cha
     strcat(fields, "}");
 
     headers = curl_slist_append(headers, "Content-Type: application/json; charset=utf-8");
-    res = dispatchCurl(url, "PATCH", fields, NULL, headers, &contents);
+    const CURLcode res = dispatchCurl(url, "PATCH", fields, NULL, headers, &contents);
 
     curl_slist_free_all(headers);
     if(!checkError(res,contents.memory)) {
@@ -357,22 +347,19 @@ FileResponse fileUpdate(char *token, char *password, char *previousPassword, cha
 
 bool deleteFile(char *token) {
     char url[120];
-    CURLcode res;
     MemoryStream contents;
-    bool retval;
 
     sprintf(url, "%s/%s", BASEURL, token);
 
-    res = dispatchCurl(url, "DELETE", NULL, NULL, NULL, &contents);
+    const CURLcode res = dispatchCurl(url, "DELETE", NULL, NULL, NULL, &contents);
 
     if(checkError(res,contents.memory)) return false;
-    retval = strncmp(contents.memory,"true",4)==0;
+    const bool retval = strncmp(contents.memory,"true",4)==0;
     free(contents.memory);
     return retval;
 }
 
 void getFile(FileResponse fileObj, MemoryStream *contents, char *password) {
-    CURLcode res;
     char xpassword[80];
     struct curl_slist *headers = NULL;
 
@@ -388,7 +375,7 @@ void getFile(FileResponse fileObj, MemoryStream *contents, char *password) {
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     };
 
-    res = dispatchCurl(fileObj.url, "GET", NULL, NULL, headers ? headers : NULL, contents);
+    const CURLcode res = dispatchCurl(fileObj.url, "GET", NULL, NULL, headers ? headers : NULL, contents);
 
     if(headers) curl_slist_free_all(headers);
     if(checkError(res,contents->memory)) return;

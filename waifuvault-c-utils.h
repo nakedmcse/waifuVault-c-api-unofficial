@@ -49,8 +49,7 @@ char *getMime(const char *ext) {
 // Builder helper functions
 
 char* BuildURL(char *baseURL, FileUpload upload) {
-    char *retval;
-    retval = (char *)malloc(4096);
+    char *retval = (char *)malloc(4096);
     if (!retval) return NULL;  // malloc failed
 
     strcpy(retval, baseURL);
