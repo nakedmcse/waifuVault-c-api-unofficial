@@ -55,7 +55,7 @@ if(err) {
 
 ## Usage
 
-This API contains 10 interactions:
+This API contains 11 interactions:
 
 1. [Upload File](#upload-file)
 2. [Get File Info](#get-file-info)
@@ -67,6 +67,7 @@ This API contains 10 interactions:
 8. [Get Bucket](#get-bucket)
 9. [Get Restrictions](#get-restrictions)
 10. [Clear Restrictions](#clear-restrictions)
+11. [Set Alternate Base URL](#set-alt-baseurl)
 
 You need to include the header files in your code for the package:
 
@@ -426,4 +427,16 @@ restrictions = clearRestrictions();
 printf("--CLEAR RESTRICTIONS COMPLETED--\n");
 printf("Restriction 1: %s, %s\n", restrictions.restrictions[0].type, restrictions.restrictions[0].value);
 printf("Restriction 2: %s, %s\n", restrictions.restrictions[1].type, restrictions.restrictions[1].value);
+```
+
+### Set Alternate Base URL<a id="set-alt-baseurl"></a>
+
+To set a custom base URL in the SDK, you use the `setAltBaseURL` function.
+
+This will change the base URL used for all functions within the SDK.
+
+```c
+// Set Alternate BASEURL
+setAltBaseURL("https://waifuvault.walker.moe/rest");
+printf("--SET ALT BASE URL COMPLETED--\n");
 ```

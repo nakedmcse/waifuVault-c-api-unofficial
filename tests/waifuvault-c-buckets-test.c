@@ -15,6 +15,10 @@ int main(void) {
 
     openCurl();
 
+    // Set Alternate BASEURL
+    setAltBaseURL("https://waifuvault.walker.moe/rest");
+    printf("--SET ALT BASE URL COMPLETED--\n");
+
     // Create bucket
     bucketCreate = createBucket();
     printf("--CREATE BUCKET COMPLETED--\n");

@@ -18,6 +18,10 @@ int main(void) {
 
     openCurl();
 
+    // Set Alternate BASEURL
+    setAltBaseURL("https://waifuvault.walker.moe/rest");
+    printf("--SET ALT BASE URL COMPLETED--\n");
+
     //urlUpload = CreateFileUpload("https://waifuvault.moe/assets/custom/images/08.png","10m","",false,false);
     urlUpload = CreateFileUpload("~/Downloads/rider3.png","10m","dangerWaifu",false,false);
     /*

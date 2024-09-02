@@ -12,7 +12,7 @@
 #include<sys/stat.h>
 #include<curl/curl.h>
 
-#define BASEURL "https://waifuvault.moe/rest"
+static char *BASEURL  = "https://waifuvault.moe/rest";
 
 static CURL *curl;
 static ErrorResponse *error;
@@ -93,6 +93,16 @@ bool checkError(CURLcode resp, char *body) {
         return true;
     }
     return false;
+}
+
+// Alt URL
+void setAltBaseURL(const char *newBaseURL) {
+    BASEURL = malloc(strlen(newBaseURL)+1);
+    if (!BASEURL) {
+        printf("MALLOC failed assigning base url: %s\n", newBaseURL);
+        exit(1);
+    }
+    strcpy(BASEURL, newBaseURL);
 }
 
 // Restrictions

@@ -21,6 +21,7 @@ bool deleteFile(char *token);
 void getFile(FileResponse fileObj, MemoryStream *contents, char *password);
 bool checkError(CURLcode resp, char *body);
 bool checkRestrictions(FileUpload fileObj);
+void setAltBaseURL(const char *newBaseURL);
 FileResponse deserializeResponse(char *body, bool stringRetention);
 BucketResponse deserializeBucketResponse(char *body);
 RestrictionResponse deserializeRestrictionResponse(char *body);

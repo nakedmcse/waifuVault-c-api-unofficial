@@ -14,6 +14,10 @@ int main(void) {
 
     openCurl();
 
+    // Set Alternate BASEURL
+    setAltBaseURL("https://waifuvault.walker.moe/rest");
+    printf("--SET ALT BASE URL COMPLETED--\n");
+
     // Get Restrictions
     restrictions = getRestrictions();
     printf("--GET RESTRICTIONS COMPLETED--\n");
