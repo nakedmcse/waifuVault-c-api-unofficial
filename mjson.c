@@ -235,11 +235,11 @@ static int json_internal_read_object(const char *cp,
 				switch (cursor->type) {
 				case t_long:
 					memcpy(lptr, &cursor->dflt.longint,
-						   sizeof(int));
+						   sizeof(long));
 					break;
 				case t_ulong:
 					memcpy(lptr, &cursor->dflt.ulongint,
-						   sizeof(unsigned int));
+						   sizeof(unsigned long));
 					break;
 				case t_integer:
 					memcpy(lptr, &cursor->dflt.integer,
@@ -646,7 +646,7 @@ static int json_internal_read_object(const char *cp,
 			if (lptr != NULL) {
 				switch (cursor->type) {
 				case t_long: {
-						int tmp = atol(valbuf);
+						long tmp = atol(valbuf);
 						memcpy(lptr, &tmp, sizeof(long));
 				} break;
 				case t_ulong: {
@@ -853,7 +853,7 @@ int json_read_array(const char *cp, const struct json_array_t *arr,
 			break;
 		case t_long:
 			arr->arr.longs.store[offset] =
-				(int)strtol(cp, &ep, 0);
+				(long)strtol(cp, &ep, 0);
 			if (ep == cp) {
 				return JSON_ERR_BADNUM;
 			} else {
@@ -862,7 +862,7 @@ int json_read_array(const char *cp, const struct json_array_t *arr,
 			break;
 		case t_ulong:
 			arr->arr.ulongs.store[offset] =
-				(unsigned int)strtoul(cp, &ep, 0);
+				(unsigned long)strtoul(cp, &ep, 0);
 			if (ep == cp) {
 				return JSON_ERR_BADNUM;
 			} else {
