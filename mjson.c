@@ -124,6 +124,12 @@ static char *json_target_address(const struct json_attr_t *cursor,
 		case t_ignore:
 			targetaddr = NULL;
 			break;
+		case t_long:
+			targetaddr = (char *)&cursor->addr.longint[offset];
+			break;
+		case t_ulong:
+			targetaddr = (char *)&cursor->addr.ulongint[offset];
+			break;
 		case t_integer:
 			targetaddr = (char *)&cursor->addr.integer[offset];
 			break;
@@ -227,6 +233,14 @@ static int json_internal_read_object(const char *cp,
 			lptr = json_target_address(cursor, parent, offset);
 			if (lptr != NULL) {
 				switch (cursor->type) {
+				case t_long:
+					memcpy(lptr, &cursor->dflt.longint,
+						   sizeof(int));
+					break;
+				case t_ulong:
+					memcpy(lptr, &cursor->dflt.ulongint,
+						   sizeof(unsigned int));
+					break;
 				case t_integer:
 					memcpy(lptr, &cursor->dflt.integer,
 					       sizeof(int));
@@ -631,6 +645,16 @@ static int json_internal_read_object(const char *cp,
 			}
 			if (lptr != NULL) {
 				switch (cursor->type) {
+				case t_long: {
+						int tmp = atol(valbuf);
+						memcpy(lptr, &tmp, sizeof(long));
+				} break;
+				case t_ulong: {
+						unsigned long tmp =
+							(unsigned long)atol(valbuf);
+						memcpy(lptr, &tmp,
+							   sizeof(unsigned long));
+				} break;
 				case t_integer: {
 					int tmp = atoi(valbuf);
 					memcpy(lptr, &tmp, sizeof(int));
@@ -825,6 +849,24 @@ int json_read_array(const char *cp, const struct json_array_t *arr,
 					end = &cp;
 				}
 				return substatus;
+			}
+			break;
+		case t_long:
+			arr->arr.longs.store[offset] =
+				(int)strtol(cp, &ep, 0);
+			if (ep == cp) {
+				return JSON_ERR_BADNUM;
+			} else {
+				cp = ep;
+			}
+			break;
+		case t_ulong:
+			arr->arr.ulongs.store[offset] =
+				(unsigned int)strtoul(cp, &ep, 0);
+			if (ep == cp) {
+				return JSON_ERR_BADNUM;
+			} else {
+				cp = ep;
 			}
 			break;
 		case t_integer:

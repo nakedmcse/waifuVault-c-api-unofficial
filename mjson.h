@@ -20,7 +20,8 @@ typedef enum {t_integer, t_uinteger, t_real,
 	      t_time,
 	      t_object, t_structobject, t_array,
 	      t_check, t_ignore,
-	      t_short, t_ushort}
+	      t_short, t_ushort,
+		  t_long, t_ulong}
     json_type;
 
 struct json_enum_t {
@@ -41,7 +42,13 @@ struct json_array_t {
 	    char *store;
 	    int storelen;
 	} strings;
-	struct {
+    struct {
+    	long *store;
+    } longs;
+    struct {
+    	unsigned long *store;
+    } ulongs;
+    struct {
 	    int *store;
 	} integers;
 	struct {
@@ -67,6 +74,8 @@ struct json_attr_t {
     char *attribute;
     json_type type;
     union {
+    long *longint;
+    unsigned long *ulongint;
 	int *integer;
 	unsigned int *uinteger;
 	short *shortint;
@@ -80,6 +89,8 @@ struct json_attr_t {
 	size_t offset;
     } addr;
     union {
+    long longint;
+    unsigned long ulongint;
 	int integer;
 	unsigned int uinteger;
 	short shortint;

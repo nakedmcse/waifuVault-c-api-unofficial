@@ -14,7 +14,7 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
     char bucket[80];
     char url[120];
     char retentionPeriod[80];
-    int retentionPeriodInt;
+    unsigned long retentionPeriodInt;
     int jsonStatus = 0;
     bool hasFilename;
     bool oneTimeDownload;
@@ -43,7 +43,7 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
         {"token", t_string, .addr.string = token, .len = sizeof(token)},
         {"bucket", t_string, .addr.string = bucket, .len = sizeof(bucket)},
         {"url", t_string, .addr.string = url, .len = sizeof(url)},
-        {"retentionPeriod", t_integer, .addr.integer = &retentionPeriodInt},
+        {"retentionPeriod", t_ulong, .addr.ulongint = &retentionPeriodInt},
         {"options", t_object, .addr.attrs = options_attrs},
         {NULL}
     };
@@ -81,7 +81,7 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
 
     if(jsonStatus==0 && !stringRetention) {
         retopts = CreateFileOptions(hasFilename, oneTimeDownload, protected);
-        sprintf(retentionPeriod, "%d", retentionPeriodInt);
+        sprintf(retentionPeriod, "%lu", retentionPeriodInt);
         if (strcmp(bucket, "null")==0) strcpy(bucket, "");
         retval = CreateFileResponse(token, bucket, url, retentionPeriod, retopts);
     };
