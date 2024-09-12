@@ -26,18 +26,27 @@ int main(void) {
     sleep(1);
 
     // Upload two files
-    fileData = CreateBucketFileUpload("~/Downloads/rory2.jpg",bucketCreate.token,"10m","",false,false);
+    fileData = CreateBucketFileUpload("~/Downloads/GothAlya.jpeg",bucketCreate.token,"","",false,false);
     uploadResponse = uploadFile(fileData);
     printf("--UPLOAD ONE COMPLETED--\n");
     printf("URL: %s\n", uploadResponse.url);
-    printf("Token: %s\n\n", uploadResponse.token);
+    printf("Token: %s\n", uploadResponse.token);
+    printf("Retention: %s\n\n", uploadResponse.retentionPeriod);
+    sleep(1);
+
+    uploadResponse = fileInfo(uploadResponse.token, false);
+    printf("--UPLOAD ONE INFO COMPLETED--\n");
+    printf("URL: %s\n", uploadResponse.url);
+    printf("Token: %s\n", uploadResponse.token);
+    printf("Retention: %s\n\n", uploadResponse.retentionPeriod);
     sleep(1);
 
     fileData = CreateBucketFileUpload("~/Downloads/vic_laptop.jpg",bucketCreate.token,"10m","",false,false);
     uploadResponse = uploadFile(fileData);
     printf("--UPLOAD TWO COMPLETED--\n");
     printf("URL: %s\n", uploadResponse.url);
-    printf("Token: %s\n\n", uploadResponse.token);
+    printf("Token: %s\n", uploadResponse.token);
+    printf("Retention: %s\n\n", uploadResponse.retentionPeriod);
     sleep(1);
 
     // Get bucket contents
