@@ -18,6 +18,13 @@ typedef struct FileUpload {
     bool oneTimeDownload;
 } FileUpload;
 
+// FilesInfo
+
+typedef struct FilesInfo {
+    int recordCount;
+    int recordSize;
+} FilesInfo;
+
 // FileOptions
 
 typedef struct FileOptions {
@@ -26,6 +33,16 @@ typedef struct FileOptions {
     bool protected;
 } FileOptions;
 
+// AlbumInfo
+
+typedef struct AlbumInfo {
+    char token[80];
+    char publicToken[80];
+    char name[120];
+    char bucket[80];
+    long dateCreated;
+} AlbumInfo;
+
 // FileResponse
 
 typedef struct FileResponse {
@@ -33,14 +50,26 @@ typedef struct FileResponse {
 	char bucket[80];
     char url[4096];
     char retentionPeriod[80];
+    int views;
+    AlbumInfo album;
     FileOptions options;
 } FileResponse;
+
+// AlbumResponse
+
+typedef struct AlbumResponse {
+    char token[80];
+    char bucketToken[80];
+    char publicToken[80];
+    char name[120];
+    FileResponse files[256];
+} AlbumResponse;
 
 // BucketResponse
 
 typedef struct BucketResponse {
     char token[80];
-    FileResponse files[100];
+    FileResponse files[256];
 } BucketResponse;
 
 // ErrorResponse
