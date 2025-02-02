@@ -19,9 +19,17 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
     bool hasFilename;
     bool oneTimeDownload;
     bool protected;
-    char *adjustedBody = (char *)malloc(strlen(body)+100);
-    FileResponse retval;
+    bool albumIsNull = strstr(body, "\"album\": null") != NULL;
+    char albumPlaceholder[10];
+    char albumToken[80];
+    char albumPublicToken[80];
+    char albumName[120];
+    char albumBucket[80];
+    unsigned long albumDateCreated;
+    int views;
+    char *adjustedBody;
     FileOptions retopts;
+    AlbumInfo albuminfo;
 
     struct json_attr_t options_attrs[] = {
         {"hideFilename", t_boolean, .addr.boolean = &hasFilename},
@@ -30,12 +38,44 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
         {NULL}
     };
 
+    struct json_attr_t album_attrs[] = {
+        {"token", t_string, .addr.string = albumToken, .len = sizeof(albumToken)},
+        {"publicToken", t_string, .addr.string = albumPublicToken, .len = sizeof(albumPublicToken)},
+        {"name", t_string, .addr.string = albumName, .len = sizeof(albumName)},
+        {"bucket", t_string, .addr.string = albumBucket, .len = sizeof(albumBucket)},
+        {"dateCreated", t_ulong, .addr.ulongint = &albumDateCreated}
+    };
+
+    struct json_attr_t rStr_album_attrs[] = {
+        {"token", t_string, .addr.string = token, .len = sizeof(token)},
+        {"bucket", t_string, .addr.string = bucket, .len = sizeof(bucket)},
+        {"url", t_string, .addr.string = url, .len = sizeof(url)},
+        {"retentionPeriod", t_string, .addr.string = retentionPeriod, .len = sizeof(retentionPeriod)},
+        {"views", t_integer, .addr.integer = &views},
+        {"options", t_object, .addr.attrs = options_attrs},
+        {"album", t_object, .addr.attrs = album_attrs},
+        {NULL}
+    };
+
     struct json_attr_t rStr_attrs[] = {
         {"token", t_string, .addr.string = token, .len = sizeof(token)},
         {"bucket", t_string, .addr.string = bucket, .len = sizeof(bucket)},
         {"url", t_string, .addr.string = url, .len = sizeof(url)},
         {"retentionPeriod", t_string, .addr.string = retentionPeriod, .len = sizeof(retentionPeriod)},
+        {"views", t_integer, .addr.integer = &views},
         {"options", t_object, .addr.attrs = options_attrs},
+        {"album", t_string, .addr.string = albumPlaceholder, .len = sizeof(albumPlaceholder)},
+        {NULL}
+    };
+
+    struct json_attr_t rInt_album_attrs[] = {
+        {"token", t_string, .addr.string = token, .len = sizeof(token)},
+        {"bucket", t_string, .addr.string = bucket, .len = sizeof(bucket)},
+        {"url", t_string, .addr.string = url, .len = sizeof(url)},
+        {"retentionPeriod", t_ulong, .addr.ulongint = &retentionPeriodInt},
+        {"views", t_integer, .addr.integer = &views},
+        {"options", t_object, .addr.attrs = options_attrs},
+        {"album", t_object, .addr.attrs = album_attrs},
         {NULL}
     };
 
@@ -44,49 +84,41 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
         {"bucket", t_string, .addr.string = bucket, .len = sizeof(bucket)},
         {"url", t_string, .addr.string = url, .len = sizeof(url)},
         {"retentionPeriod", t_ulong, .addr.ulongint = &retentionPeriodInt},
+        {"views", t_integer, .addr.integer = &views},
         {"options", t_object, .addr.attrs = options_attrs},
+        {"album", t_string, .addr.string = albumPlaceholder, .len = sizeof(albumPlaceholder)},
         {NULL}
     };
 
     // Fix :null to :"null"
-    adjustedBody[0] = 0;
-    for(int i=0; i<strlen(body); i++) {
-        if (body[i] == 'n' && body[i-1] == ':') {
-            strcat(adjustedBody, "\"n");
-        }
-        else if (body[i] == ',' && body[i-1] == 'l') {
-            strcat(adjustedBody, "\",");
-        }
-        else {
-            char tmp[2];
-            tmp[0] = body[i];
-            tmp[1] = 0;
-            strcat(adjustedBody, tmp);
-        }
-    }
+    adjustedBody = strReplace(body, "null,", "\"null\",");
 
-    jsonStatus = json_read_object(adjustedBody, stringRetention ? rStr_attrs : rInt_attrs, NULL);
+    jsonStatus = albumIsNull ? json_read_object(adjustedBody, stringRetention ? rStr_attrs : rInt_attrs, NULL)
+        : json_read_object(adjustedBody, stringRetention ? rStr_album_attrs : rInt_album_attrs, NULL);
     free(adjustedBody);
     if(jsonStatus!=0) {
         fprintf(stderr, "json deserialize failed: %s\n", json_error_string(jsonStatus));
         fprintf(stderr, "raw body: %s\n", body);
+        fprintf(stderr, "adjusted body: %s\n", adjustedBody);
         fprintf(stderr, "body size: %lu\n", strlen(body));
     };
 
     if(jsonStatus==0 && stringRetention) {
         retopts = CreateFileOptions(hasFilename, oneTimeDownload, protected);
+        albuminfo = albumIsNull ? CreateAlbumInfo("","","","",0)
+            : CreateAlbumInfo(albumToken, albumPublicToken, albumBucket, albumName, albumDateCreated);
         if (strcmp(bucket, "null")==0) strcpy(bucket, "");
-        retval = CreateFileResponse(token, bucket, url, retentionPeriod, retopts);
+        return CreateFileResponse(token, bucket, url, retentionPeriod, retopts, albuminfo);
     };
 
     if(jsonStatus==0 && !stringRetention) {
         retopts = CreateFileOptions(hasFilename, oneTimeDownload, protected);
+        albuminfo = albumIsNull ? CreateAlbumInfo("","","","",0)
+            : CreateAlbumInfo(albumToken, albumPublicToken, albumBucket, albumName, albumDateCreated);
         sprintf(retentionPeriod, "%lu", retentionPeriodInt);
         if (strcmp(bucket, "null")==0) strcpy(bucket, "");
-        retval = CreateFileResponse(token, bucket, url, retentionPeriod, retopts);
+        return CreateFileResponse(token, bucket, url, retentionPeriod, retopts, albuminfo);
     };
-
-    return retval;
 }
 
 BucketResponse deserializeBucketResponse(char *body) {
@@ -171,6 +203,44 @@ RestrictionResponse deserializeRestrictionResponse(char *body) {
 
     free(adjustedBody);
     return retval;
+}
+
+char *strReplace(const char *original, const char *target, const char *replacement) {
+    if (!original || !target || !replacement) return NULL;
+
+    int target_len = strlen(target);
+    int replacement_len = strlen(replacement);
+
+    // Count occurrences of target substring
+    int count = 0;
+    const char *ptr = original;
+    while ((ptr = strstr(ptr, target)) != NULL) {
+        count++;
+        ptr += target_len;
+    }
+
+    if (count == 0) return strdup(original);
+
+    // Allocate new string with enough space
+    size_t new_length = strlen(original) + count * (replacement_len - target_len);
+    char *result = malloc(new_length + 1); // +1 for null terminator
+    if (!result) return NULL;
+
+    // Replace occurrences
+    char *dest = result;
+    ptr = original;
+    while (*ptr) {
+        if (strncmp(ptr, target, target_len) == 0) {
+            strcpy(dest, replacement);
+            dest += replacement_len;
+            ptr += target_len;
+        } else {
+            *dest++ = *ptr++;
+        }
+    }
+    *dest = '\0';
+
+    return result;
 }
 
 #endif //WAIFUVAULT_C_DESERIALIZERS_H

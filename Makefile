@@ -7,6 +7,7 @@ tests: mjson.o waifuvault-c-api.o tests/waifuvault-c-test.c tests/waifuvault-c-b
 	gcc -O3 -w -o tests/waifuvault-c-test tests/waifuvault-c-test.c mjson.o waifuvault-c-api.o -lcurl
 	gcc -O3 -w -o tests/waifuvault-c-buckets-test tests/waifuvault-c-buckets-test.c mjson.o waifuvault-c-api.o -lcurl
 	gcc -O3 -w -o tests/waifuvault-c-restrictions-test tests/waifuvault-c-restrictions-test.c mjson.o waifuvault-c-api.o -lcurl
+	gcc -O3 -w -o tests/waifuvault-c-deserializer-test tests/waifuvault-c-deserializer-test.c mjson.o waifuvault-c-api.o -lcurl
 
 clean:
 	rm -f *.o

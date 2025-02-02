@@ -30,11 +30,13 @@ FileUpload CreateFileUpload(char *target, char *expires, char *password, bool hi
 FileUpload CreateBucketFileUpload(char *target, char *bucketToken, char *expires, char *password, bool hidefilename, bool onetimedownload);
 FileUpload CreateBufferUpload(void *target, long size, char *filename, char *expires, char *password, bool hidefilename, bool onetimedownload);
 FileOptions CreateFileOptions(bool hasfilename, bool onetimedownload, bool protected);
-FileResponse CreateFileResponse(char *token, char *bucket, char *url, char *retention, FileOptions options);
+AlbumInfo CreateAlbumInfo(char *token, char *publicToken, char *bucket, char *name, unsigned long dateCreated);
+FileResponse CreateFileResponse(char *token, char *bucket, char *url, char *retention, FileOptions options, AlbumInfo album);
 ErrorResponse CreateErrorResponse(char *name, int status, char *message);
 static size_t WriteMemoryStream(void *contents, size_t size, size_t membytes, void *userp);
 char* expandHomedir(const char* path);
 char *fileExtension(const char *filename);
 char *getMime(const char *ext);
+char *strReplace(const char *original, const char *target, const char *replacement);
 
 #endif

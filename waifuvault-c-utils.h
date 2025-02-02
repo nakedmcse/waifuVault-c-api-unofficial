@@ -136,13 +136,24 @@ FileOptions CreateFileOptions(bool hasfilename, bool onetimedownload, bool prote
     return retval;
 }
 
-FileResponse CreateFileResponse(char *token, char *bucket, char *url, char *retention, FileOptions options) {
+AlbumInfo CreateAlbumInfo(char *token, char *publicToken, char *bucket, char *name, unsigned long dateCreated) {
+    AlbumInfo retval;
+    if(token != NULL) strcpy(retval.token, token);
+    if(publicToken != NULL) strcpy(retval.publicToken, publicToken);
+    if(bucket != NULL) strcpy(retval.bucket, bucket);
+    if(name != NULL) strcpy(retval.name, name);
+    retval.dateCreated = dateCreated;
+    return retval;
+}
+
+FileResponse CreateFileResponse(char *token, char *bucket, char *url, char *retention, FileOptions options, AlbumInfo album) {
     FileResponse retval;
     if(token != NULL) strcpy(retval.token, token);
     if(bucket != NULL) strcpy(retval.bucket, bucket);
     if(url != NULL) strcpy(retval.url, url);
     if(retention != NULL) strcpy(retval.retentionPeriod, retention);
     retval.options = options;
+    retval.album = album;
     return retval;
 }
 

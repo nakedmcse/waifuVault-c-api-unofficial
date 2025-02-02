@@ -40,7 +40,7 @@ typedef struct AlbumInfo {
     char publicToken[80];
     char name[120];
     char bucket[80];
-    long dateCreated;
+    unsigned long dateCreated;
 } AlbumInfo;
 
 // FileResponse
