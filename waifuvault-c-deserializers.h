@@ -26,7 +26,7 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
     char albumName[120];
     char albumBucket[80];
     unsigned long albumDateCreated;
-    int views;
+    int views, id;
     char *adjustedBody;
     FileOptions retopts;
     AlbumInfo albuminfo;
@@ -52,6 +52,7 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
         {"url", t_string, .addr.string = url, .len = sizeof(url)},
         {"retentionPeriod", t_string, .addr.string = retentionPeriod, .len = sizeof(retentionPeriod)},
         {"views", t_integer, .addr.integer = &views},
+        {"id", t_integer, .addr.integer = &id},
         {"options", t_object, .addr.attrs = options_attrs},
         {"album", t_object, .addr.attrs = album_attrs},
         {NULL}
@@ -63,6 +64,7 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
         {"url", t_string, .addr.string = url, .len = sizeof(url)},
         {"retentionPeriod", t_string, .addr.string = retentionPeriod, .len = sizeof(retentionPeriod)},
         {"views", t_integer, .addr.integer = &views},
+        {"id", t_integer, .addr.integer = &id},
         {"options", t_object, .addr.attrs = options_attrs},
         {"album", t_string, .addr.string = albumPlaceholder, .len = sizeof(albumPlaceholder)},
         {NULL}
@@ -74,6 +76,7 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
         {"url", t_string, .addr.string = url, .len = sizeof(url)},
         {"retentionPeriod", t_ulong, .addr.ulongint = &retentionPeriodInt},
         {"views", t_integer, .addr.integer = &views},
+        {"id", t_integer, .addr.integer = &id},
         {"options", t_object, .addr.attrs = options_attrs},
         {"album", t_object, .addr.attrs = album_attrs},
         {NULL}
@@ -85,6 +88,7 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
         {"url", t_string, .addr.string = url, .len = sizeof(url)},
         {"retentionPeriod", t_ulong, .addr.ulongint = &retentionPeriodInt},
         {"views", t_integer, .addr.integer = &views},
+        {"id", t_integer, .addr.integer = &id},
         {"options", t_object, .addr.attrs = options_attrs},
         {"album", t_string, .addr.string = albumPlaceholder, .len = sizeof(albumPlaceholder)},
         {NULL}
@@ -108,7 +112,7 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
         albuminfo = albumIsNull ? CreateAlbumInfo("","","","",0)
             : CreateAlbumInfo(albumToken, albumPublicToken, albumBucket, albumName, albumDateCreated);
         if (strcmp(bucket, "null")==0) strcpy(bucket, "");
-        return CreateFileResponse(token, bucket, url, retentionPeriod, retopts, albuminfo);
+        return CreateFileResponse(token, bucket, url, retentionPeriod, retopts, albuminfo, id, views);
     };
 
     if(jsonStatus==0 && !stringRetention) {
@@ -117,12 +121,12 @@ FileResponse deserializeResponse(char *body, bool stringRetention) {
             : CreateAlbumInfo(albumToken, albumPublicToken, albumBucket, albumName, albumDateCreated);
         sprintf(retentionPeriod, "%lu", retentionPeriodInt);
         if (strcmp(bucket, "null")==0) strcpy(bucket, "");
-        return CreateFileResponse(token, bucket, url, retentionPeriod, retopts, albuminfo);
+        return CreateFileResponse(token, bucket, url, retentionPeriod, retopts, albuminfo, id, views);
     };
 }
 
 BucketResponse deserializeBucketResponse(char *body) {
-    int jsonStatus = 0, files_count = 0;
+    int jsonStatus = 0, files_count = 0, albums_count = 0;
     BucketResponse retval;
 
     struct json_attr_t options_attrs[] = {
@@ -132,7 +136,16 @@ BucketResponse deserializeBucketResponse(char *body) {
         {NULL}
     };
 
+    struct json_attr_t album_attrs[] = {
+        {"token", t_string, STRUCTOBJECT(struct AlbumInfo, token), .len = sizeof(retval.albums[0].token)},
+        {"publicToken", t_string, STRUCTOBJECT(struct AlbumInfo, publicToken), .len = sizeof(retval.albums[0].publicToken)},
+        {"name", t_string, STRUCTOBJECT(struct AlbumInfo, name), .len = sizeof(retval.albums[0].name)},
+        {"bucket", t_string, STRUCTOBJECT(struct AlbumInfo, bucket), .len = sizeof(retval.albums[0].bucket)},
+        {"dateCreated", t_ignore}
+    };
+
     struct json_attr_t files_attrs[] = {
+
         {"token", t_string, STRUCTOBJECT(struct FileResponse, token), .len = sizeof(retval.files[0].token)},
         {"bucket", t_string, STRUCTOBJECT(struct FileResponse, bucket), .len = sizeof(retval.files[0].bucket)},
         {"url", t_string, STRUCTOBJECT(struct FileResponse, url), .len = sizeof(retval.files[0].url)},
@@ -144,10 +157,12 @@ BucketResponse deserializeBucketResponse(char *body) {
     struct json_attr_t bucket_attrs[] = {
         {"token", t_string, .addr.string = retval.token, .len = sizeof(retval.token)},
         {"files", t_array, STRUCTARRAY(retval.files, files_attrs, &files_count)},
+        {"albums", t_array, STRUCTARRAY(retval.albums, album_attrs, &albums_count)},
         {NULL}
     };
 
     memset(&retval.files, '\0', sizeof(retval.files));
+    memset(&retval.albums, '\0', sizeof(retval.albums));
 
     jsonStatus = json_read_object(body, bucket_attrs, NULL);
     if(jsonStatus!=0) {

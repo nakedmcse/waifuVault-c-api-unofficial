@@ -51,6 +51,7 @@ typedef struct FileResponse {
     char url[4096];
     char retentionPeriod[80];
     int views;
+    int id;
     AlbumInfo album;
     FileOptions options;
 } FileResponse;
@@ -70,6 +71,7 @@ typedef struct AlbumResponse {
 typedef struct BucketResponse {
     char token[80];
     FileResponse files[256];
+    AlbumInfo albums[256];
 } BucketResponse;
 
 // ErrorResponse

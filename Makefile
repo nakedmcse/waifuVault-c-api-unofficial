@@ -14,3 +14,4 @@ clean:
 	rm -f tests/waifuvault-c-test
 	rm -f tests/waifuvault-c-buckets-test
 	rm -f tests/waifuvault-c-restrictions-test
+	rm -f tests/waifuvault-c-deserializer-test

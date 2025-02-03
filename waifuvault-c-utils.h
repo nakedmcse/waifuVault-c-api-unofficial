@@ -146,7 +146,7 @@ AlbumInfo CreateAlbumInfo(char *token, char *publicToken, char *bucket, char *na
     return retval;
 }
 
-FileResponse CreateFileResponse(char *token, char *bucket, char *url, char *retention, FileOptions options, AlbumInfo album) {
+FileResponse CreateFileResponse(char *token, char *bucket, char *url, char *retention, FileOptions options, AlbumInfo album, int id, int views) {
     FileResponse retval;
     if(token != NULL) strcpy(retval.token, token);
     if(bucket != NULL) strcpy(retval.bucket, bucket);
@@ -154,6 +154,8 @@ FileResponse CreateFileResponse(char *token, char *bucket, char *url, char *rete
     if(retention != NULL) strcpy(retval.retentionPeriod, retention);
     retval.options = options;
     retval.album = album;
+    retval.id = id;
+    retval.views = views;
     return retval;
 }
 

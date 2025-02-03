@@ -20,6 +20,7 @@ int main(void) {
 	  "\"dateCreated\": 1738521377000"
 	"},"
 	"\"token\": \"63a1a691-1ab3-44d5-9102-37e817c4af3a\","
+	"\"id\": 1,"
 	"\"views\": 3,"
 	"\"url\": \"http://localhost:8081/f/1738521461344/ronin-monster-2.jpeg\","
 	"\"options\": {"
@@ -34,6 +35,7 @@ int main(void) {
   "\"retentionPeriod\": \"334 days 13 hours 4 minutes 41 seconds\","
   "\"album\": null,"
   "\"token\": \"029a56c1-e5dd-47d0-a648-ea4838e2d134\","
+	"\"id\": 2,"
   "\"views\": 1,"
   "\"url\": \"http://localhost:8081/f/1738521461351/ronin-monster.jpeg\","
   "\"options\": {"
@@ -45,9 +47,11 @@ int main(void) {
 
 	normalFile = deserializeResponse(noAlbumJson, true);
 	printf("No album file album name: %s\n", normalFile.album.name);
+	printf("No album file id: %d\n", normalFile.id);
 
 	albumFile = deserializeResponse(albumJson, true);
 	printf("Album file album name: %s\n", albumFile.album.name);
+	printf("Album file id: %d\n", albumFile.id);
 
 	return 0;
 }
