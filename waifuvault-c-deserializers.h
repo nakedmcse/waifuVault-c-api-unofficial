@@ -136,6 +136,14 @@ BucketResponse deserializeBucketResponse(char *body) {
         {NULL}
     };
 
+    struct json_attr_t file_album_attrs[] = {
+        {"token", t_ignore},
+        {"publicToken", t_ignore},
+        {"name", t_ignore},
+        {"bucket", t_ignore},
+        {"dateCreated", t_ignore}
+    };
+
     struct json_attr_t album_attrs[] = {
         {"token", t_string, STRUCTOBJECT(struct AlbumInfo, token), .len = sizeof(retval.albums[0].token)},
         {"publicToken", t_string, STRUCTOBJECT(struct AlbumInfo, publicToken), .len = sizeof(retval.albums[0].publicToken)},
@@ -149,7 +157,10 @@ BucketResponse deserializeBucketResponse(char *body) {
         {"token", t_string, STRUCTOBJECT(struct FileResponse, token), .len = sizeof(retval.files[0].token)},
         {"bucket", t_string, STRUCTOBJECT(struct FileResponse, bucket), .len = sizeof(retval.files[0].bucket)},
         {"url", t_string, STRUCTOBJECT(struct FileResponse, url), .len = sizeof(retval.files[0].url)},
+        {"id", t_integer, STRUCTOBJECT(struct FileResponse, id), .len = sizeof(retval.files[0].id)},
+        {"views", t_integer, STRUCTOBJECT(struct FileResponse, views), .len = sizeof(retval.files[0].views)},
         {"retentionPeriod", t_ignore},
+        {"album", t_object, .addr.attrs = file_album_attrs},
         {"options", t_object, .addr.attrs = options_attrs},
         {NULL}
     };
