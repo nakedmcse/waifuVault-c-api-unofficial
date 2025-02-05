@@ -4,8 +4,8 @@
 
 #ifndef WAIFUVAULT_C_MODELS
 #define WAIFUVAULT_C_MODELS
-// FileUpload
 
+// FileUpload
 typedef struct FileUpload {
     char filename[512];
     char url[4096];
@@ -19,14 +19,12 @@ typedef struct FileUpload {
 } FileUpload;
 
 // FilesInfo
-
 typedef struct FilesInfo {
     int recordCount;
     int recordSize;
 } FilesInfo;
 
 // FileOptions
-
 typedef struct FileOptions {
     bool hasFilename;
     bool oneTimeDownload;
@@ -34,7 +32,6 @@ typedef struct FileOptions {
 } FileOptions;
 
 // AlbumInfo
-
 typedef struct AlbumInfo {
     char token[80];
     char publicToken[80];
@@ -44,7 +41,6 @@ typedef struct AlbumInfo {
 } AlbumInfo;
 
 // FileResponse
-
 typedef struct FileResponse {
     char token[80];
 	char bucket[80];
@@ -57,7 +53,6 @@ typedef struct FileResponse {
 } FileResponse;
 
 // AlbumResponse
-
 typedef struct AlbumResponse {
     char token[80];
     char bucketToken[80];
@@ -67,7 +62,6 @@ typedef struct AlbumResponse {
 } AlbumResponse;
 
 // BucketResponse
-
 typedef struct BucketResponse {
     char token[80];
     FileResponse files[256];
@@ -75,7 +69,6 @@ typedef struct BucketResponse {
 } BucketResponse;
 
 // ErrorResponse
-
 typedef struct ErrorResponse {
     char name[80];
     int status;
@@ -83,27 +76,23 @@ typedef struct ErrorResponse {
 } ErrorResponse;
 
 // Restriction
-
 typedef struct Restriction {
     char type[80];
     char value[512];
 } Restriction;
 
 // Restriction Response
-
 typedef struct RestrictionResponse {
     Restriction restrictions[100];
 } RestrictionResponse;
 
 // MIME Lookup table
-
 typedef struct MimeMap {
     char *ext;
     char *mime;
 } MimeMap;
 
 // List from https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
-
 static MimeMap mimes[] = {
     {".aac", "audio/aac"},
     {".abw", "application/x-abiword"},
@@ -185,7 +174,6 @@ static MimeMap mimes[] = {
 };
 
 // Memory Stream for curl
-
 typedef struct MemoryStream {
     char *memory;
     size_t size;
