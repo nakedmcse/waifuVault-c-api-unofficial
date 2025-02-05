@@ -3,7 +3,7 @@
 #include "waifuvault-c-models.h"
 #include "waifuvault-c-utils.h"
 #include "waifuvault-c-deserializers.h"
-#include "mjson.h"
+#include "cJSON.h"
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
@@ -62,13 +62,6 @@ bool checkError(CURLcode resp, char *body) {
     int status = 0;
     long http_code = 0;
 
-    struct json_attr_t error_attrs[] = {
-        {"name", t_string, .addr.string = name, .len = sizeof(name)},
-        {"status", t_integer, .addr.integer = &status},
-        {"message", t_string, .addr.string = message, .len = sizeof(message)},
-        {NULL}
-    };
-
     if(resp != CURLE_OK) {
         fprintf(stderr, "curl failed: %s\n", curl_easy_strerror(resp));
         return true;
@@ -76,20 +69,8 @@ bool checkError(CURLcode resp, char *body) {
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     if(http_code >= 400) {
         fprintf(stderr, "http code error: %d\n", (int)http_code);
-
-        const int jsonStatus = json_read_object(body, error_attrs, NULL);
-        if(jsonStatus!=0) {
-            fprintf(stderr, "json deserialize failed: %s\n", json_error_string(jsonStatus));
-            fprintf(stderr, "raw body: %s\n", body);
-            fprintf(stderr, "body size: %lu\n", strlen(body));
-            return true;
-        };
-
         if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
-        error->status = status;
-        strcpy(error->name, name);
-        strcpy(error->message, message);
-
+        *error = deserializeErrorResponse(body);
         return true;
     }
     return false;
@@ -304,7 +285,7 @@ FileResponse uploadFile(FileUpload fileObj) {
     }
 
     if(!checkError(res, contents.memory)) {
-        retval = deserializeResponse(contents.memory, true);
+        retval = deserializeResponse(contents.memory);
     }
     free(contents.memory);
     return retval;
@@ -319,7 +300,7 @@ FileResponse fileInfo(char *token, bool formatted) {
 
     const CURLcode res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
     if(!checkError(res,contents.memory)) {
-        retval = deserializeResponse(contents.memory, formatted);
+        retval = deserializeResponse(contents.memory);
     }
     free(contents.memory);
     return retval;
@@ -349,7 +330,7 @@ FileResponse fileUpdate(char *token, char *password, char *previousPassword, cha
 
     curl_slist_free_all(headers);
     if(!checkError(res,contents.memory)) {
-        retval = deserializeResponse(contents.memory, false);
+        retval = deserializeResponse(contents.memory);
     }
     free(contents.memory);
     return retval;

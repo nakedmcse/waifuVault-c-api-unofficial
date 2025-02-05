@@ -78,9 +78,9 @@ FileResponse unmarshalFileResponse(cJSON *body) {
     else if(cJSON_IsNumber(retentionPeriod)) sprintf(retval.retentionPeriod, "%d", retentionPeriod->valueint);
     if(cJSON_IsNumber(id)) retval.id = id->valueint;
     if(cJSON_IsNumber(views)) retval.views = views->valueint;
-    if(!cJSON_IsNull(album)) retval.album = DeserializeAlbumInfo(album);
+    if(!cJSON_IsNull(album)) retval.album = unmarshalAlbumInfo(album);
     else retval.album = emptyAlbum;
-    if(!cJSON_IsNull(options)) retval.options = DeserializeFileOptions(options);
+    if(!cJSON_IsNull(options)) retval.options = unmarshalFileOptions(options);
     else retval.options = emptyOptions;
 
     return retval;
@@ -107,7 +107,7 @@ AlbumResponse unmarshalAlbumResponse(cJSON *body) {
     if(cJSON_IsNumber(dateCreated)) retval.dateCreated = (unsigned long)dateCreated->valueint;
 
     cJSON_ArrayForEach(file, files) {
-        retval.files[i] = DeserializeFileResponse(file);
+        retval.files[i] = unmarshalFileResponse(file);
         i++;
         if(i>255) break;
     }
@@ -149,12 +149,12 @@ BucketResponse unmarshalBucket(cJSON *body) {
 
     if(cJSON_IsString(token)) strncpy(retval.token, token->valuestring, 80);
     cJSON_ArrayForEach(file, files) {
-        retval.files[i] = DeserializeFileResponse(file);
+        retval.files[i] = unmarshalFileResponse(file);
         i++;
         if(i>255) break;
     }
     cJSON_ArrayForEach(album, albums) {
-        retval.albums[j] = DeserializeAlbumInfo(album);
+        retval.albums[j] = unmarshalAlbumInfo(album);
         j++;
         if(j>255) break;
     }
@@ -209,10 +209,42 @@ RestrictionResponse unmarshalRestrictionResponse(cJSON *body) {
     cJSON *restrictions, *restriction;
     restrictions = cJSON_GetObjectItem(body, "restrictions");
     cJSON_ArrayForEach(restriction, restrictions) {
-        retval.restrictions[i] = DeserializeRestriction(restriction);
+        retval.restrictions[i] = unmarshalRestriction(restriction);
         i++;
         if(i>100) break;
     }
+
+    return retval;
+}
+
+// Deserialize General Response
+GeneralResponse unmarshalGeneralResponse(cJSON *body) {
+    GeneralResponse retval;
+    retval.success = false;
+    retval.description[0] = 0;
+    cJSON *success, *description;
+
+    success = cJSON_GetObjectItem(body, "success");
+    description = cJSON_GetObjectItem(body, "description");
+
+    if(cJSON_IsBool(success)) retval.success = success->valueint;
+    if(cJSON_IsString(description)) strncpy(retval.description, description->valuestring, 512);
+
+    return retval;
+}
+
+// Deserialize FilesInfo
+FilesInfo unmarshalFilesInfo(cJSON *body) {
+    FilesInfo retval;
+    retval.recordCount = -1;
+    retval.recordSize = -1;
+    cJSON *recordCount, *recordSize;
+
+    recordCount = cJSON_GetObjectItem(body, "recordCount");
+    recordSize = cJSON_GetObjectItem(body, "recordSize");
+
+    if(cJSON_IsNumber(recordCount)) retval.recordCount = recordCount->valueint;
+    if(cJSON_IsNumber(recordSize))  retval.recordSize = recordSize->valueint;
 
     return retval;
 }
@@ -267,4 +299,17 @@ RestrictionResponse deserializeRestrictionResponse(char *body) {
     return retval;
 }
 
+FilesInfo deserializeFilesInfo(char *body) {
+    cJSON *infoObject = ParseJson(body);
+    FilesInfo retval = unmarshalFilesInfo(infoObject);
+    cJSON_Delete(infoObject);
+    return retval;
+}
+
+ErrorResponse deserializeErrorResponse(char *body) {
+    cJSON *errorObject = ParseJson(body);
+    ErrorResponse retval = unmarshalErrorResponse(errorObject);
+    cJSON_Delete(errorObject);
+    return retval;
+}
 #endif //WAIFUVAULT_C_DESERIALIZERS_H

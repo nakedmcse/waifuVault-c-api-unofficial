@@ -59,6 +59,7 @@ typedef struct AlbumResponse {
     char publicToken[80];
     char name[120];
     FileResponse files[256];
+    unsigned long dateCreated;
 } AlbumResponse;
 
 // BucketResponse
@@ -74,6 +75,12 @@ typedef struct ErrorResponse {
     int status;
     char message[4096];
 } ErrorResponse;
+
+// GeneralResponse
+typedef struct GeneralResponse {
+    bool success;
+    char description[512];
+} GeneralResponse;
 
 // Restriction
 typedef struct Restriction {

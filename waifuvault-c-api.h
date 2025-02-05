@@ -27,6 +27,8 @@ BucketResponse deserializeBucketResponse(char *body);
 RestrictionResponse deserializeRestrictionResponse(char *body);
 AlbumResponse deserializeAlbumResponse(char *body);
 AlbumInfo deserializeAlbumInfo(char *body);
+FilesInfo deserializeFilesInfo(char *body);
+ErrorResponse deserializeErrorResponse(char *body);
 char* BuildURL(char *baseURL, FileUpload upload);
 FileUpload CreateFileUpload(char *target, char *expires, char *password, bool hidefilename, bool onetimedownload);
 FileUpload CreateBucketFileUpload(char *target, char *bucketToken, char *expires, char *password, bool hidefilename, bool onetimedownload);
