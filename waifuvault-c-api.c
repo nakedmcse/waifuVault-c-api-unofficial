@@ -105,6 +105,21 @@ RestrictionResponse getRestrictions() {
     return retval;
 }
 
+FilesInfo getFileStats() {
+    char url[512];
+    MemoryStream contents;
+    FilesInfo retval;
+
+    sprintf(url, "%s/resources/stats/files", BASEURL);
+
+    const CURLcode res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
+    if(!checkError(res, contents.memory)) {
+        retval = deserializeFilesInfo(contents.memory);
+    }
+    free(contents.memory);
+    return retval;
+}
+
 RestrictionResponse clearRestrictions() {
     RestrictionResponse retval;
     for(int i = 0; i < 100; i++) {
@@ -157,6 +172,40 @@ bool checkRestrictions(FileUpload fileObj) {
         }
     }
     return false;
+}
+
+// Albums
+
+AlbumResponse createAlbum(char *bucketToken, char *name) {
+    // TODO: implement
+}
+
+bool deleteAlbum(char *albumToken, bool deleteFiles) {
+    // TODO: implement
+}
+
+AlbumResponse getAlbum(char *token) {
+    // TODO: implement
+}
+
+AlbumResponse associateFiles(char *token, char *fileTokens[], int count) {
+    // TODO: implement
+}
+
+AlbumResponse disassociateFiles(char *token, char *fileTokens[], int count) {
+    // TODO: implement
+}
+
+char *shareAlbum(char *token) {
+    // TODO: implement
+}
+
+bool revokeAlbum(char *token) {
+    // TODO: implement
+}
+
+void downloadAlbum(char *token, int *files, int count, MemoryStream *contents) {
+    // TODO: implement
 }
 
 // Buckets
