@@ -106,6 +106,11 @@ AlbumResponse unmarshalAlbumResponse(cJSON *body) {
     if(cJSON_IsString(name)) strncpy(retval.name, name->valuestring, 120);
     if(cJSON_IsNumber(dateCreated)) retval.dateCreated = (unsigned long)dateCreated->valueint;
 
+    for(int j = 0; j < 256; j++) {
+        retval.files[j].bucket[0] = 0;
+        retval.files[j].id = -1;
+        retval.files[j].token[0] = 0;
+    }
     cJSON_ArrayForEach(file, files) {
         retval.files[i] = unmarshalFileResponse(file);
         i++;

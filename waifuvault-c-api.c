@@ -233,12 +233,13 @@ AlbumResponse associateFiles(char *token, char *fileTokens[], int count) {
 
     headers = curl_slist_append(headers, "Content-Type: application/json");
     sprintf(url, "%s/album/%s/associate", BASEURL, token);
-    sprintf(body, "{\"fileTokens\":[");
+    sprintf(body, "{\"fileTokens\": [");
     for(int i = 0; i<count; i++) {
         strcat(body, "\"");
         strcat(body,fileTokens[i]);
         strcat(body,"\",");
     }
+    body[strlen(body)-1] = 0;
     strcat(body, "]}");
 
     const CURLcode res = dispatchCurl(url, "POST", body, NULL, headers, &contents);
@@ -264,6 +265,7 @@ AlbumResponse disassociateFiles(char *token, char *fileTokens[], int count) {
         strcat(body,fileTokens[i]);
         strcat(body,"\",");
     }
+    body[strlen(body)-1] = 0;
     strcat(body, "]}");
 
     const CURLcode res = dispatchCurl(url, "POST", body, NULL, headers, &contents);
