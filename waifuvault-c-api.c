@@ -3,7 +3,7 @@
 #include "waifuvault-c-models.h"
 #include "waifuvault-c-utils.h"
 #include "waifuvault-c-deserializers.h"
-#include "mjson.h"
+#include "cJSON.h"
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
@@ -62,13 +62,6 @@ bool checkError(CURLcode resp, char *body) {
     int status = 0;
     long http_code = 0;
 
-    struct json_attr_t error_attrs[] = {
-        {"name", t_string, .addr.string = name, .len = sizeof(name)},
-        {"status", t_integer, .addr.integer = &status},
-        {"message", t_string, .addr.string = message, .len = sizeof(message)},
-        {NULL}
-    };
-
     if(resp != CURLE_OK) {
         fprintf(stderr, "curl failed: %s\n", curl_easy_strerror(resp));
         return true;
@@ -76,20 +69,8 @@ bool checkError(CURLcode resp, char *body) {
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     if(http_code >= 400) {
         fprintf(stderr, "http code error: %d\n", (int)http_code);
-
-        const int jsonStatus = json_read_object(body, error_attrs, NULL);
-        if(jsonStatus!=0) {
-            fprintf(stderr, "json deserialize failed: %s\n", json_error_string(jsonStatus));
-            fprintf(stderr, "raw body: %s\n", body);
-            fprintf(stderr, "body size: %lu\n", strlen(body));
-            return true;
-        };
-
         if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
-        error->status = status;
-        strcpy(error->name, name);
-        strcpy(error->message, message);
-
+        *error = deserializeErrorResponse(body);
         return true;
     }
     return false;
@@ -121,6 +102,21 @@ RestrictionResponse getRestrictions() {
     for(int i = 0; i < 100; i++) {
         restrictions.restrictions[i] = retval.restrictions[i];
     }
+    return retval;
+}
+
+FilesInfo getFileStats() {
+    char url[512];
+    MemoryStream contents;
+    FilesInfo retval;
+
+    sprintf(url, "%s/resources/stats/files", BASEURL);
+
+    const CURLcode res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
+    if(!checkError(res, contents.memory)) {
+        retval = deserializeFilesInfo(contents.memory);
+    }
+    free(contents.memory);
     return retval;
 }
 
@@ -176,6 +172,165 @@ bool checkRestrictions(FileUpload fileObj) {
         }
     }
     return false;
+}
+
+// Albums
+
+AlbumResponse createAlbum(char *bucketToken, char *name) {
+    char url[512];
+    char body[512];
+    struct curl_slist *headers = NULL;
+    MemoryStream contents;
+    AlbumResponse retval;
+
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    sprintf(url, "%s/album/%s", BASEURL, bucketToken);
+    sprintf(body, "{\"name\":\"%s\"}", name);
+
+    const CURLcode res = dispatchCurl(url, "POST", body, NULL, headers, &contents);
+    if(!checkError(res, contents.memory)) {
+        retval = deserializeAlbumResponse(contents.memory);
+    }
+    free(contents.memory);
+    return retval;
+}
+
+bool deleteAlbum(char *albumToken, bool deleteFiles) {
+    char url[512];
+    MemoryStream contents;
+
+    sprintf(url, "%s/album/%s?deleteFiles=%s", BASEURL, albumToken, deleteFiles ? "true" : "false");
+
+    const CURLcode res = dispatchCurl(url, "DELETE", NULL, NULL, NULL, &contents);
+
+    if(checkError(res,contents.memory)) return false;
+    const GeneralResponse resp = unmarshalGeneralResponse(ParseJson(contents.memory));
+    free(contents.memory);
+    return resp.success;
+}
+
+AlbumResponse getAlbum(char *token) {
+    char url[512];
+    MemoryStream contents;
+    AlbumResponse retval;
+
+    sprintf(url, "%s/album/%s", BASEURL, token);
+
+    const CURLcode res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
+    if(!checkError(res, contents.memory)) {
+        retval = deserializeAlbumResponse(contents.memory);
+    }
+    free(contents.memory);
+    return retval;
+}
+
+AlbumResponse associateFiles(char *token, char *fileTokens[], int count) {
+    char url[512];
+    char body[4096];
+    struct curl_slist *headers = NULL;
+    MemoryStream contents;
+    AlbumResponse retval;
+
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    sprintf(url, "%s/album/%s/associate", BASEURL, token);
+    sprintf(body, "{\"fileTokens\": [");
+    for(int i = 0; i<count; i++) {
+        strcat(body, "\"");
+        strcat(body,fileTokens[i]);
+        strcat(body,"\",");
+    }
+    body[strlen(body)-1] = 0;
+    strcat(body, "]}");
+
+    const CURLcode res = dispatchCurl(url, "POST", body, NULL, headers, &contents);
+    if(!checkError(res, contents.memory)) {
+        retval = deserializeAlbumResponse(contents.memory);
+    }
+    free(contents.memory);
+    return retval;
+}
+
+AlbumResponse disassociateFiles(char *token, char *fileTokens[], int count) {
+    char url[512];
+    char body[4096];
+    struct curl_slist *headers = NULL;
+    MemoryStream contents;
+    AlbumResponse retval;
+
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    sprintf(url, "%s/album/%s/disassociate", BASEURL, token);
+    sprintf(body, "{\"fileTokens\":[");
+    for(int i = 0; i<count; i++) {
+        strcat(body, "\"");
+        strcat(body,fileTokens[i]);
+        strcat(body,"\",");
+    }
+    body[strlen(body)-1] = 0;
+    strcat(body, "]}");
+
+    const CURLcode res = dispatchCurl(url, "POST", body, NULL, headers, &contents);
+    if(!checkError(res, contents.memory)) {
+        retval = deserializeAlbumResponse(contents.memory);
+    }
+    free(contents.memory);
+    return retval;
+}
+
+char *shareAlbum(char *token) {
+    char url[512];
+    MemoryStream contents;
+    GeneralResponse resp;
+    char *retval;
+
+    sprintf(url, "%s/album/share/%s", BASEURL, token);
+
+    const CURLcode res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
+    if(!checkError(res, contents.memory)) {
+        resp = unmarshalGeneralResponse(ParseJson(contents.memory));
+        retval = malloc(strlen(resp.description) + 1);
+        strcpy(retval, resp.description);
+    }
+    free(contents.memory);
+    return retval;
+}
+
+bool revokeAlbum(char *token) {
+    char url[512];
+    MemoryStream contents;
+    GeneralResponse resp;
+
+    sprintf(url, "%s/album/revoke/%s", BASEURL, token);
+
+    const CURLcode res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
+    if(!checkError(res, contents.memory)) {
+        resp = unmarshalGeneralResponse(ParseJson(contents.memory));
+    }
+    free(contents.memory);
+    return resp.success;
+}
+
+void downloadAlbum(char *token, int *files, int count, MemoryStream *contents) {
+    char url[512];
+    char body[4096];
+    struct curl_slist *headers = NULL;
+
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    sprintf(url, "%s/album/download/%s", BASEURL, token);
+    if(count == 0) {
+        sprintf(body, "[]");
+    }
+    else {
+        sprintf(body, "[");
+        for(int i=0; i<count; i++) {
+            char str[20];
+            snprintf(str, sizeof(str), "%d,", files[i]);
+            strcat(body, str);
+        }
+        strcat(body, "]");
+    }
+
+    const CURLcode res = dispatchCurl(url, "POST", body, NULL, headers, contents);
+    if(checkError(res,contents->memory)) return;
 }
 
 // Buckets
@@ -304,7 +459,7 @@ FileResponse uploadFile(FileUpload fileObj) {
     }
 
     if(!checkError(res, contents.memory)) {
-        retval = deserializeResponse(contents.memory, true);
+        retval = deserializeResponse(contents.memory);
     }
     free(contents.memory);
     return retval;
@@ -319,7 +474,7 @@ FileResponse fileInfo(char *token, bool formatted) {
 
     const CURLcode res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
     if(!checkError(res,contents.memory)) {
-        retval = deserializeResponse(contents.memory, formatted);
+        retval = deserializeResponse(contents.memory);
     }
     free(contents.memory);
     return retval;
@@ -349,7 +504,7 @@ FileResponse fileUpdate(char *token, char *password, char *previousPassword, cha
 
     curl_slist_free_all(headers);
     if(!checkError(res,contents.memory)) {
-        retval = deserializeResponse(contents.memory, false);
+        retval = deserializeResponse(contents.memory);
     }
     free(contents.memory);
     return retval;

@@ -4,173 +4,317 @@
 #include<stdlib.h>
 #include<stddef.h>
 #include "waifuvault-c-models.h"
-#include "mjson.h"
+#include "cJSON.h"
 
 #ifndef WAIFUVAULT_C_DESERIALIZERS_H
 #define WAIFUVAULT_C_DESERIALIZERS_H
 
-FileResponse deserializeResponse(char *body, bool stringRetention) {
-    char token[80];
-    char bucket[80];
-    char url[120];
-    char retentionPeriod[80];
-    unsigned long retentionPeriodInt;
-    int jsonStatus = 0;
-    bool hasFilename;
-    bool oneTimeDownload;
-    bool protected;
-    char *adjustedBody = (char *)malloc(strlen(body)+100);
+// Unmarshallers
+// Deserialize FileOptions
+FileOptions unmarshalFileOptions(cJSON *body) {
+    FileOptions retval;
+    cJSON *protected, *hasFilename, *oneTimeDownload;
+
+    protected = cJSON_GetObjectItem(body, "protected");
+    hasFilename = cJSON_GetObjectItem(body, "hasFilename");
+    oneTimeDownload = cJSON_GetObjectItem(body, "oneTimeDownload");
+
+    if(cJSON_IsBool(protected)) retval.protected = protected->valueint;
+    if(cJSON_IsBool(hasFilename)) retval.hasFilename = hasFilename->valueint;
+    if(cJSON_IsBool(oneTimeDownload)) retval.oneTimeDownload = oneTimeDownload->valueint;
+
+    return retval;
+}
+
+// Deserialize AlbumInfo
+AlbumInfo unmarshalAlbumInfo(cJSON *body) {
+    AlbumInfo retval;
+    cJSON *token, *publicToken, *name, *bucket, *dateCreated;
+
+    token = cJSON_GetObjectItem(body, "token");
+    publicToken = cJSON_GetObjectItem(body, "publicToken");
+    name = cJSON_GetObjectItem(body, "name");
+    bucket = cJSON_GetObjectItem(body, "bucket");
+    dateCreated = cJSON_GetObjectItem(body, "dateCreated");
+
+    if(cJSON_IsString(token)) strncpy(retval.token, token->valuestring, 80);
+    if(cJSON_IsNull(publicToken)) strcpy(retval.publicToken, "");
+    else if(cJSON_IsString(publicToken)) strncpy(retval.publicToken, publicToken->valuestring, 80);
+    if(cJSON_IsString(bucket)) strncpy(retval.bucket, bucket->valuestring, 80);
+    if(cJSON_IsString(name)) strncpy(retval.name, name->valuestring, 120);
+    if(cJSON_IsNumber(dateCreated)) retval.dateCreated = (unsigned long)dateCreated->valueint;
+
+    return retval;
+}
+
+// Deserialize FileResponse
+FileResponse unmarshalFileResponse(cJSON *body) {
     FileResponse retval;
-    FileOptions retopts;
+    AlbumInfo emptyAlbum;
+    emptyAlbum.bucket[0] = 0;
+    emptyAlbum.name[0] = 0;
+    emptyAlbum.token[0] = 0;
+    emptyAlbum.publicToken[0] = 0;
+    emptyAlbum.dateCreated = 0;
+    FileOptions emptyOptions;
+    emptyOptions.protected = false;
+    emptyOptions.hasFilename = false;
+    emptyOptions.oneTimeDownload = false;
+    cJSON *token, *bucket, *url, *retentionPeriod, *id, *views, *album, *options;
 
-    struct json_attr_t options_attrs[] = {
-        {"hideFilename", t_boolean, .addr.boolean = &hasFilename},
-        {"oneTimeDownload", t_boolean, .addr.boolean = &oneTimeDownload},
-        {"protected", t_boolean, .addr.boolean = &protected},
-        {NULL}
-    };
+    token = cJSON_GetObjectItem(body, "token");
+    bucket = cJSON_GetObjectItem(body, "bucket");
+    url = cJSON_GetObjectItem(body, "url");
+    retentionPeriod = cJSON_GetObjectItem(body, "retentionPeriod");
+    id = cJSON_GetObjectItem(body, "id");
+    views = cJSON_GetObjectItem(body, "views");
+    album = cJSON_GetObjectItem(body, "album");
+    options = cJSON_GetObjectItem(body, "options");
 
-    struct json_attr_t rStr_attrs[] = {
-        {"token", t_string, .addr.string = token, .len = sizeof(token)},
-        {"bucket", t_string, .addr.string = bucket, .len = sizeof(bucket)},
-        {"url", t_string, .addr.string = url, .len = sizeof(url)},
-        {"retentionPeriod", t_string, .addr.string = retentionPeriod, .len = sizeof(retentionPeriod)},
-        {"options", t_object, .addr.attrs = options_attrs},
-        {NULL}
-    };
+    if(cJSON_IsString(token)) strncpy(retval.token, token->valuestring, 80);
+    if(cJSON_IsString(bucket)) strncpy(retval.bucket, bucket->valuestring, 80);
+    if(cJSON_IsString(url)) strncpy(retval.url, url->valuestring, 4096);
+    if(cJSON_IsString(retentionPeriod)) strncpy(retval.retentionPeriod, retentionPeriod->valuestring, 80);
+    else if(cJSON_IsNumber(retentionPeriod)) sprintf(retval.retentionPeriod, "%d", retentionPeriod->valueint);
+    if(cJSON_IsNumber(id)) retval.id = id->valueint;
+    if(cJSON_IsNumber(views)) retval.views = views->valueint;
+    if(!cJSON_IsNull(album)) retval.album = unmarshalAlbumInfo(album);
+    else retval.album = emptyAlbum;
+    if(!cJSON_IsNull(options)) retval.options = unmarshalFileOptions(options);
+    else retval.options = emptyOptions;
 
-    struct json_attr_t rInt_attrs[] = {
-        {"token", t_string, .addr.string = token, .len = sizeof(token)},
-        {"bucket", t_string, .addr.string = bucket, .len = sizeof(bucket)},
-        {"url", t_string, .addr.string = url, .len = sizeof(url)},
-        {"retentionPeriod", t_ulong, .addr.ulongint = &retentionPeriodInt},
-        {"options", t_object, .addr.attrs = options_attrs},
-        {NULL}
-    };
+    return retval;
+}
 
-    // Fix :null to :"null"
-    adjustedBody[0] = 0;
-    for(int i=0; i<strlen(body); i++) {
-        if (body[i] == 'n' && body[i-1] == ':') {
-            strcat(adjustedBody, "\"n");
-        }
-        else if (body[i] == ',' && body[i-1] == 'l') {
-            strcat(adjustedBody, "\",");
-        }
-        else {
-            char tmp[2];
-            tmp[0] = body[i];
-            tmp[1] = 0;
-            strcat(adjustedBody, tmp);
-        }
+// Deserialize AlbumResponse
+AlbumResponse unmarshalAlbumResponse(cJSON *body) {
+    AlbumResponse retval;
+    cJSON *token, *publicToken, *name, *bucket, *dateCreated, *files, *file;
+    int i = 0;
+
+    token = cJSON_GetObjectItem(body, "token");
+    publicToken = cJSON_GetObjectItem(body, "publicToken");
+    name = cJSON_GetObjectItem(body, "name");
+    bucket = cJSON_GetObjectItem(body, "bucketToken");
+    dateCreated = cJSON_GetObjectItem(body, "dateCreated");
+    files = cJSON_GetObjectItem(body, "files");
+
+    if(cJSON_IsString(token)) strncpy(retval.token, token->valuestring, 80);
+    if(cJSON_IsNull(publicToken)) strcpy(retval.publicToken, "");
+    else if(cJSON_IsString(publicToken)) strncpy(retval.publicToken, publicToken->valuestring, 80);
+    if(cJSON_IsString(bucket)) strncpy(retval.bucketToken, bucket->valuestring, 80);
+    if(cJSON_IsString(name)) strncpy(retval.name, name->valuestring, 120);
+    if(cJSON_IsNumber(dateCreated)) retval.dateCreated = (unsigned long)dateCreated->valueint;
+
+    for(int j = 0; j < 256; j++) {
+        retval.files[j].bucket[0] = 0;
+        retval.files[j].id = -1;
+        retval.files[j].token[0] = 0;
+    }
+    cJSON_ArrayForEach(file, files) {
+        retval.files[i] = unmarshalFileResponse(file);
+        i++;
+        if(i>255) break;
     }
 
-    jsonStatus = json_read_object(adjustedBody, stringRetention ? rStr_attrs : rInt_attrs, NULL);
-    free(adjustedBody);
-    if(jsonStatus!=0) {
-        fprintf(stderr, "json deserialize failed: %s\n", json_error_string(jsonStatus));
-        fprintf(stderr, "raw body: %s\n", body);
-        fprintf(stderr, "body size: %lu\n", strlen(body));
-    };
+    return retval;
+}
 
-    if(jsonStatus==0 && stringRetention) {
-        retopts = CreateFileOptions(hasFilename, oneTimeDownload, protected);
-        if (strcmp(bucket, "null")==0) strcpy(bucket, "");
-        retval = CreateFileResponse(token, bucket, url, retentionPeriod, retopts);
-    };
+// DeserializeBucket
+BucketResponse unmarshalBucket(cJSON *body) {
+    BucketResponse retval;
+    retval.token[0] = 0;
+    AlbumInfo emptyAlbum;
+    emptyAlbum.bucket[0] = 0;
+    emptyAlbum.name[0] = 0;
+    emptyAlbum.token[0] = 0;
+    emptyAlbum.publicToken[0] = 0;
+    emptyAlbum.dateCreated = 0;
+    FileOptions emptyOptions;
+    emptyOptions.protected = false;
+    emptyOptions.hasFilename = false;
+    emptyOptions.oneTimeDownload = false;
+    FileResponse emptyFile;
+    emptyFile.album = emptyAlbum;
+    emptyFile.options = emptyOptions;
+    emptyFile.bucket[0] = 0;
+    emptyFile.id = -1;
+    emptyFile.token[0] = 0;
+    emptyFile.url[0] = 0;
+    emptyFile.views = -1;
+    emptyFile.retentionPeriod[0] = 0;
+    retval.files[0] = emptyFile;
+    retval.albums[0] = emptyAlbum;
 
-    if(jsonStatus==0 && !stringRetention) {
-        retopts = CreateFileOptions(hasFilename, oneTimeDownload, protected);
-        sprintf(retentionPeriod, "%lu", retentionPeriodInt);
-        if (strcmp(bucket, "null")==0) strcpy(bucket, "");
-        retval = CreateFileResponse(token, bucket, url, retentionPeriod, retopts);
-    };
+    cJSON *token, *files, *file, *albums, *album;
+    int i = 0, j = 0;
+    token = cJSON_GetObjectItem(body, "token");
+    files = cJSON_GetObjectItem(body, "files");
+    albums = cJSON_GetObjectItem(body, "albums");
 
+    if(cJSON_IsString(token)) strncpy(retval.token, token->valuestring, 80);
+    cJSON_ArrayForEach(file, files) {
+        retval.files[i] = unmarshalFileResponse(file);
+        i++;
+        if(i>255) break;
+    }
+    cJSON_ArrayForEach(album, albums) {
+        retval.albums[j] = unmarshalAlbumInfo(album);
+        j++;
+        if(j>255) break;
+    }
+
+    return retval;
+}
+
+// Deserialize ErrorResponse
+ErrorResponse unmarshalErrorResponse(cJSON *body) {
+    ErrorResponse retval;
+    retval.name[0] = 0;
+    retval.message[0] = 0;
+    retval.status = -1;
+    cJSON *name, *status, *message;
+
+    name = cJSON_GetObjectItem(body, "name");
+    status = cJSON_GetObjectItem(body, "status");
+    message = cJSON_GetObjectItem(body, "message");
+
+    if(cJSON_IsString(name)) strncpy(retval.name, name->valuestring, 80);
+    if(cJSON_IsString(message)) strncpy(retval.message, message->valuestring, 4096);
+    if(cJSON_IsNumber(status)) retval.status = status->valueint;
+
+    return retval;
+}
+
+// Deserialize Restriction
+Restriction unmarshalRestriction(cJSON *body) {
+    Restriction retval;
+    retval.type[0] = 0;
+    retval.value[0] = 0;
+    cJSON *type, *value;
+
+    type = cJSON_GetObjectItem(body, "type");
+    value = cJSON_GetObjectItem(body, "value");
+
+    if(cJSON_IsString(type)) strncpy(retval.type, type->valuestring, 80);
+    if(cJSON_IsString(value)) strncpy(retval.value, value->valuestring, 512);
+
+    return retval;
+}
+
+// Deserialize RestrictionResponse
+RestrictionResponse unmarshalRestrictionResponse(cJSON *body) {
+    RestrictionResponse retval;
+    Restriction emptyRestriction;
+    emptyRestriction.type[0] = 0;
+    emptyRestriction.value[0] = 0;
+    retval.restrictions[0] = emptyRestriction;
+    int i = 0;
+
+    cJSON *restrictions, *restriction;
+    restrictions = cJSON_GetObjectItem(body, "restrictions");
+    cJSON_ArrayForEach(restriction, restrictions) {
+        retval.restrictions[i] = unmarshalRestriction(restriction);
+        i++;
+        if(i>100) break;
+    }
+
+    return retval;
+}
+
+// Deserialize General Response
+GeneralResponse unmarshalGeneralResponse(cJSON *body) {
+    GeneralResponse retval;
+    retval.success = false;
+    retval.description[0] = 0;
+    cJSON *success, *description;
+
+    success = cJSON_GetObjectItem(body, "success");
+    description = cJSON_GetObjectItem(body, "description");
+
+    if(cJSON_IsBool(success)) retval.success = success->valueint;
+    if(cJSON_IsString(description)) strncpy(retval.description, description->valuestring, 512);
+
+    return retval;
+}
+
+// Deserialize FilesInfo
+FilesInfo unmarshalFilesInfo(cJSON *body) {
+    FilesInfo retval;
+    retval.recordCount = -1;
+    retval.recordSize = -1;
+    cJSON *recordCount, *recordSize;
+
+    recordCount = cJSON_GetObjectItem(body, "recordCount");
+    recordSize = cJSON_GetObjectItem(body, "recordSize");
+
+    if(cJSON_IsNumber(recordCount)) retval.recordCount = recordCount->valueint;
+    if(cJSON_IsNumber(recordSize))  retval.recordSize = recordSize->valueint;
+
+    return retval;
+}
+
+// Parse Json from string
+cJSON *ParseJson(char *body) {
+    cJSON *jsonObj = cJSON_Parse(body);
+    if (jsonObj == NULL)
+    {
+        const char *error_ptr = cJSON_GetErrorPtr();
+        if (error_ptr != NULL)
+        {
+            fprintf(stderr, "Error before: %s\n", error_ptr);
+        }
+    }
+    return jsonObj;
+}
+
+// Deserializers
+FileResponse deserializeResponse(char *body) {
+    cJSON *fileObject = ParseJson(body);
+    FileResponse retval = unmarshalFileResponse(fileObject);
+    cJSON_Delete(fileObject);
     return retval;
 }
 
 BucketResponse deserializeBucketResponse(char *body) {
-    int jsonStatus = 0, files_count = 0;
-    BucketResponse retval;
+    cJSON *bucketObject = ParseJson(body);
+    BucketResponse retval = unmarshalBucket(bucketObject);
+    cJSON_Delete(bucketObject);
+    return retval;
+}
 
-    struct json_attr_t options_attrs[] = {
-        {"hideFilename", t_ignore},
-        {"oneTimeDownload", t_ignore},
-        {"protected", t_ignore},
-        {NULL}
-    };
+AlbumResponse deserializeAlbumResponse(char *body) {
+    cJSON *albumObject = ParseJson(body);
+    AlbumResponse retval = unmarshalAlbumResponse(albumObject);
+    cJSON_Delete(albumObject);
+    return retval;
+}
 
-    struct json_attr_t files_attrs[] = {
-        {"token", t_string, STRUCTOBJECT(struct FileResponse, token), .len = sizeof(retval.files[0].token)},
-        {"bucket", t_string, STRUCTOBJECT(struct FileResponse, bucket), .len = sizeof(retval.files[0].bucket)},
-        {"url", t_string, STRUCTOBJECT(struct FileResponse, url), .len = sizeof(retval.files[0].url)},
-        {"retentionPeriod", t_ignore},
-        {"options", t_object, .addr.attrs = options_attrs},
-        {NULL}
-    };
-
-    struct json_attr_t bucket_attrs[] = {
-        {"token", t_string, .addr.string = retval.token, .len = sizeof(retval.token)},
-        {"files", t_array, STRUCTARRAY(retval.files, files_attrs, &files_count)},
-        {NULL}
-    };
-
-    memset(&retval.files, '\0', sizeof(retval.files));
-
-    jsonStatus = json_read_object(body, bucket_attrs, NULL);
-    if(jsonStatus!=0) {
-        fprintf(stderr, "json deserialize failed: %s\n", json_error_string(jsonStatus));
-        fprintf(stderr, "raw body: %s\n", body);
-        fprintf(stderr, "body size: %lu\n", strlen(body));
-    };
-
+AlbumInfo deserializeAlbumInfo(char *body) {
+    cJSON *albumObject = ParseJson(body);
+    AlbumInfo retval = unmarshalAlbumInfo(albumObject);
+    cJSON_Delete(albumObject);
     return retval;
 }
 
 RestrictionResponse deserializeRestrictionResponse(char *body) {
-    int jsonStatus = 0, restriction_count = 0;
-    char *adjustedBody = (char *)malloc(strlen(body)+100);
-    RestrictionResponse retval;
-
-    struct json_attr_t restriction_attrs[] = {
-        {"type", t_string, STRUCTOBJECT(struct Restriction, type), .len = sizeof(retval.restrictions[0].type)},
-        {"value", t_string, STRUCTOBJECT(struct Restriction, value), .len = sizeof(retval.restrictions[0].value)},
-        {NULL}
-    };
-
-    struct json_attr_t restrictions_attrs[] = {
-        {"restrictions", t_array, STRUCTARRAY(retval.restrictions, restriction_attrs, &restriction_count)},
-        {NULL}
-    };
-
-    strcpy(adjustedBody, "{\"restrictions\":");
-    for(int i=0; i<strlen(body); i++) {
-        if (body[i] == ':' && body[i+1] != '"') {
-            strcat(adjustedBody, ":\"");
-        }
-        else if (body[i] == '}' && body[i-1] != '"') {
-            strcat(adjustedBody, "\"}");
-        }
-        else {
-            char tmp[2];
-            tmp[0] = body[i];
-            tmp[1] = 0;
-            strcat(adjustedBody, tmp);
-        }
-    }
-    strcat(adjustedBody, "}");
-
-    memset(&retval.restrictions, '\0', sizeof(retval.restrictions));
-
-    jsonStatus = json_read_object(adjustedBody, restrictions_attrs, NULL);
-    if(jsonStatus!=0) {
-        fprintf(stderr, "json deserialize failed: %s\n", json_error_string(jsonStatus));
-        fprintf(stderr, "raw body: %s\n", body);
-        fprintf(stderr, "body size: %lu\n", strlen(body));
-    };
-
-    free(adjustedBody);
+    cJSON *restObject = ParseJson(body);
+    RestrictionResponse retval = unmarshalRestrictionResponse(restObject);
+    cJSON_Delete(restObject);
     return retval;
 }
 
+FilesInfo deserializeFilesInfo(char *body) {
+    cJSON *infoObject = ParseJson(body);
+    FilesInfo retval = unmarshalFilesInfo(infoObject);
+    cJSON_Delete(infoObject);
+    return retval;
+}
+
+ErrorResponse deserializeErrorResponse(char *body) {
+    cJSON *errorObject = ParseJson(body);
+    ErrorResponse retval = unmarshalErrorResponse(errorObject);
+    cJSON_Delete(errorObject);
+    return retval;
+}
 #endif //WAIFUVAULT_C_DESERIALIZERS_H
