@@ -177,35 +177,158 @@ bool checkRestrictions(FileUpload fileObj) {
 // Albums
 
 AlbumResponse createAlbum(char *bucketToken, char *name) {
-    // TODO: implement
+    char url[512];
+    char body[512];
+    struct curl_slist *headers = NULL;
+    MemoryStream contents;
+    AlbumResponse retval;
+
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    sprintf(url, "%s/album/%s", BASEURL, bucketToken);
+    sprintf(body, "{\"name\":\"%s\"}", name);
+
+    const CURLcode res = dispatchCurl(url, "POST", body, NULL, headers, &contents);
+    if(!checkError(res, contents.memory)) {
+        retval = deserializeAlbumResponse(contents.memory);
+    }
+    free(contents.memory);
+    return retval;
 }
 
 bool deleteAlbum(char *albumToken, bool deleteFiles) {
-    // TODO: implement
+    char url[512];
+    MemoryStream contents;
+
+    sprintf(url, "%s/album/%s?deleteFiles=%s", BASEURL, albumToken, deleteFiles ? "true" : "false");
+
+    const CURLcode res = dispatchCurl(url, "DELETE", NULL, NULL, NULL, &contents);
+
+    if(checkError(res,contents.memory)) return false;
+    const GeneralResponse resp = unmarshalGeneralResponse(ParseJson(contents.memory));
+    free(contents.memory);
+    return resp.success;
 }
 
 AlbumResponse getAlbum(char *token) {
-    // TODO: implement
+    char url[512];
+    MemoryStream contents;
+    AlbumResponse retval;
+
+    sprintf(url, "%s/album/%s", BASEURL, token);
+
+    const CURLcode res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
+    if(!checkError(res, contents.memory)) {
+        retval = deserializeAlbumResponse(contents.memory);
+    }
+    free(contents.memory);
+    return retval;
 }
 
 AlbumResponse associateFiles(char *token, char *fileTokens[], int count) {
-    // TODO: implement
+    char url[512];
+    char body[4096];
+    struct curl_slist *headers = NULL;
+    MemoryStream contents;
+    AlbumResponse retval;
+
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    sprintf(url, "%s/album/%s/associate", BASEURL, token);
+    sprintf(body, "{\"fileTokens\":[");
+    for(int i = 0; i<count; i++) {
+        strcat(body, "\"");
+        strcat(body,fileTokens[i]);
+        strcat(body,"\",");
+    }
+    strcat(body, "]}");
+
+    const CURLcode res = dispatchCurl(url, "POST", body, NULL, headers, &contents);
+    if(!checkError(res, contents.memory)) {
+        retval = deserializeAlbumResponse(contents.memory);
+    }
+    free(contents.memory);
+    return retval;
 }
 
 AlbumResponse disassociateFiles(char *token, char *fileTokens[], int count) {
-    // TODO: implement
+    char url[512];
+    char body[4096];
+    struct curl_slist *headers = NULL;
+    MemoryStream contents;
+    AlbumResponse retval;
+
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    sprintf(url, "%s/album/%s/disassociate", BASEURL, token);
+    sprintf(body, "{\"fileTokens\":[");
+    for(int i = 0; i<count; i++) {
+        strcat(body, "\"");
+        strcat(body,fileTokens[i]);
+        strcat(body,"\",");
+    }
+    strcat(body, "]}");
+
+    const CURLcode res = dispatchCurl(url, "POST", body, NULL, headers, &contents);
+    if(!checkError(res, contents.memory)) {
+        retval = deserializeAlbumResponse(contents.memory);
+    }
+    free(contents.memory);
+    return retval;
 }
 
 char *shareAlbum(char *token) {
-    // TODO: implement
+    char url[512];
+    MemoryStream contents;
+    GeneralResponse resp;
+    char *retval;
+
+    sprintf(url, "%s/album/share/%s", BASEURL, token);
+
+    const CURLcode res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
+    if(!checkError(res, contents.memory)) {
+        resp = unmarshalGeneralResponse(ParseJson(contents.memory));
+        retval = malloc(strlen(resp.description) + 1);
+        strcpy(retval, resp.description);
+    }
+    free(contents.memory);
+    return retval;
 }
 
 bool revokeAlbum(char *token) {
-    // TODO: implement
+    char url[512];
+    MemoryStream contents;
+    GeneralResponse resp;
+
+    sprintf(url, "%s/album/revoke/%s", BASEURL, token);
+
+    const CURLcode res = dispatchCurl(url, "GET", NULL, NULL, NULL, &contents);
+    if(!checkError(res, contents.memory)) {
+        resp = unmarshalGeneralResponse(ParseJson(contents.memory));
+    }
+    free(contents.memory);
+    return resp.success;
 }
 
 void downloadAlbum(char *token, int *files, int count, MemoryStream *contents) {
-    // TODO: implement
+    char url[512];
+    char body[4096];
+    struct curl_slist *headers = NULL;
+
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    sprintf(url, "%s/album/download/%s", BASEURL, token);
+    if(count == 0) {
+        sprintf(body, "[]");
+    }
+    else {
+        sprintf(body, "[");
+        for(int i=0; i<count; i++) {
+            char str[20];
+            snprintf(str, sizeof(str), "%d,", files[i]);
+            strcat(body, str);
+        }
+        strcat(body, "]");
+    }
+
+    const CURLcode res = dispatchCurl(url, "POST", body, NULL, headers, contents);
+    if(checkError(res,contents->memory)) return;
 }
 
 // Buckets
