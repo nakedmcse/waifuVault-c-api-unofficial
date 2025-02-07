@@ -12,24 +12,24 @@ SDKs will be on a best effort basis only.
 
 ## Installation
 
-The SDK uses the microjson library for json parsing, as well as itself.  First build both .o files using the build script in the root directory
+The SDK uses the cJSON library for json parsing, as well as itself.  First build both .o files using the build script in the root directory
 of the repo.
 
 ```sh
 make sdk
 ```
 
-This will give you mjson.o and waifuvault-c-api.o.  You will need both .o files and the header files for both the models and the api.  These get added as include lines at the top.
+This will give you cJSON.o and waifuvault-c-api.o.  You will need both .o files and the header files for both the models and the api.  These get added as include lines at the top.
 
 ```c
 #include "waifuvault-c-api.h"
 #include "waifuvault-c-models.h"
 ```
 
-Your code finally needs to be linked against mjson, waifuvault-c-api and curl.
+Your code finally needs to be linked against cJSON, waifuvault-c-api and curl.
 
 ```sh
-gcc -o your-code your-code.c mjson.o waifuvault-c-api.o -lcurl
+gcc -o your-code your-code.c cJSON.o waifuvault-c-api.o -lcurl
 ```
 
 ## Error Handling
@@ -55,7 +55,7 @@ if(err) {
 
 ## Usage
 
-This API contains 11 interactions:
+This API contains 19 interactions:
 
 1. [Upload File](#upload-file)
 2. [Get File Info](#get-file-info)
@@ -65,9 +65,17 @@ This API contains 11 interactions:
 6. [Create Bucket](#create-bucket)
 7. [Delete Bucket](#delete-bucket)
 8. [Get Bucket](#get-bucket)
-9. [Get Restrictions](#get-restrictions)
-10. [Clear Restrictions](#clear-restrictions)
-11. [Set Alternate Base URL](#set-alt-baseurl)
+9. [Create Album](#create-album)
+10. [Delete Album](#delete-album)
+11. [Get Album](#get-album)
+12. [Associate Files](#associate-files)
+13. [Disassociate Files](#disassociate-files)
+14. [Share Album](#share-album)
+15. [Revoke Album](#revoke-album)
+16. [Download Album](#download-album)
+17. [Get Restrictions](#get-restrictions)
+18. [Clear Restrictions](#clear-restrictions)
+19. [Set Alternate Base URL](#set-alt-baseurl)
 
 You need to include the header files in your code for the package:
 
@@ -393,6 +401,195 @@ printf("File: %s\n", bucketGet.files[0].url);
 printf("Token: %s\n", bucketGet.files[0].token);
 printf("File: %s\n", bucketGet.files[1].url);
 printf("Token: %s\n, bucketGet.files[1].token);
+```
+
+### Create Album<a id="create-album"></a>
+Albums are shareable collections of files that exist within a bucket.
+
+To create an album, you use the `createAlbum` function and supply a bucket token and name.
+
+The function takes the following parameters:
+
+| Option        | Type      | Description                         | Required | Extra info        |
+|---------------|-----------|-------------------------------------|----------|-------------------|
+| `bucketToken` | `string`  | The token of the bucket             | true     |                   |
+| `name`        | `string`  | The name of the album to be created | true     |                   |
+
+This will respond with an album object containing the name and token of the album.
+
+```c
+AlbumResponse albumCreate;
+
+albumCreate = createAlbum(bucketCreate.token, "test-album");
+
+printf("Album token: %s\n\n", albumCreate.token);
+```
+
+### Delete Album<a id="delete-album"></a>
+To delete an album, you use the `deleteAlbum` function and supply the album token and a boolean indication of whether
+or not the files contained in the album should be deleted or not.  If you chose false, the files will be returned to the
+bucket.
+
+The function takes the following parameters:
+
+| Option        | Type     | Description                         | Required | Extra info        |
+|---------------|----------|-------------------------------------|----------|-------------------|
+| `albumToken`  | `string` | The private token of the album      | true     |                   |
+| `deleteFiles` | `bool`   | Whether the files should be deleted | true     |                   |
+
+> **NOTE:** If `deleteFiles` is set to True, the files will be permanently deleted
+
+This will respond with a boolean indicating success.
+
+```c
+bool deleteResponse;
+
+deleteResponse = deleteAlbum(albumCreate.token, false);
+
+printf("Completed: %s\n\n", deleteResponse ? "true" : "false");
+
+```
+
+### Get Album<a id="get-album"></a>
+To get the contents of an album, you use the `getAlbum` function and supply the album token.  The token must be the private token.
+
+The function takes the following parameters:
+
+| Option  | Type     | Description                    | Required | Extra info |
+|---------|----------|--------------------------------|----------|------------|
+| `token` | `string` | The private token of the album | true     |            |
+
+This will respond with the album object containing the album information and files contained within the album.
+
+```c
+AlbumResponse album;
+
+album = getAlbum("some-album-token");
+
+printf("%s\n", album.token);
+printf("%s\n", album.bucketToken);
+printf("%s\n", album.publicToken);
+printf("%s\n", album.name);
+printf("%s\n", album.files[0].token);  // Array of file objects
+```
+
+### Associate Files<a id="associate-files"></a>
+To add files to an album, you use the `associateFiles` function and supply the private album token and
+a list of file tokens.
+
+The function takes the following parameters:
+
+| Option  | Type           | Description                         | Required | Extra info |
+|---------|----------------|-------------------------------------|----------|------------|
+| `token` | `string`       | The private token of the album      | true     |            |
+| `files` | `list[string]` | List of file tokens to add to album | true     |            |
+| `count` | `int`          | Count of files in list              | true     |            |
+
+This will respond with the new album object containing the added files.
+
+```c
+AlbumResponse albumAssoc;
+char *files[2];
+files[0] = "some-file-token-1";
+files[1] = "some-file-token-2";
+
+albumAssoc = associateFiles("some-album-token", files, 2);
+    
+printf("File token 1: %s\nFile token 2: %s\n\n", albumAssoc.files[0].token, albumAssoc.files[1].token);
+```
+
+### Disassociate Files<a id="disassociate-files"></a>
+To remove files from an album, you use the `disassociateFiles` function and supply the private album token and
+a list of file tokens.
+
+The function takes the following parameters:
+
+| Option  | Type           | Description                              | Required | Extra info |
+|---------|----------------|------------------------------------------|----------|------------|
+| `token` | `string`       | The private token of the album           | true     |            |
+| `files` | `list[string]` | List of file tokens to remove from album | true     |            |
+| `count` | `int`          | Count of files in list                   | true     |            |
+
+This will respond with the new album object with the files removed.
+
+```c
+AlbumResponse albumDisassoc;
+char *files[2];
+files[0] = "some-file-token-1";
+files[1] = "some-file-token-2";
+
+albumDisassoc = disassociateFiles("some-album-token", files, 2);
+    
+printf("File token 1: %s\nFile token 2: %s\n\n", albumDisassoc.files[0].token, albumDisassoc.files[1].token);
+```
+
+### Share Album<a id="share-album"></a>
+To share an album, so it contents can be accessed from a public URL, you use the `shareAlbum` function and
+supply the private token.
+
+The function takes the following parameters:
+
+| Option  | Type           | Description                         | Required | Extra info |
+|---------|----------------|-------------------------------------|----------|------------|
+| `token` | `string`       | The private token of the album      | true     |            |
+
+This will respond with the public URL with which the album can be found.
+
+```c
+char *shareResp;
+
+shareResp = shareAlbum("some-album-token");
+
+printf("URL: %s\n\n", shareResp);
+```
+
+> **NOTE:** The public album token can now be found in the `getAlbum` results
+
+### Revoke Album<a id="revoke-album"></a>
+To revoke the sharing of an album, so it will no longer be accessible publicly, you use the `revokeAlbum` function
+and supply the private token.
+
+The function takes the following parameters:
+
+| Option  | Type           | Description                         | Required | Extra info |
+|---------|----------------|-------------------------------------|----------|------------|
+| `token` | `string`       | The private token of the album      | true     |            |
+
+This will respond with a boolean True if the album was revoked.
+
+```c
+bool revokeResp;
+
+revokeResp = revokeAlbum("some-album-token");
+
+printf("%s\n\n", revokeResp ? "true" : "false");
+```
+
+> **NOTE:** Once revoked, the URL for sharing is destroyed.  If the album is later shared again, the URL issued will be different.
+
+### Download Album<a id="download-album"></a>
+To download the contents of an album as a zip file, you use the `downloadAlbum` function and supply a private or public
+token for the album.
+
+You can also supply the file ids as an array to selectively download files. these ids can be found as part of the
+get info response.
+
+The zip file will be returned as a memory stream buffer.
+
+The function takes the following parameters:
+
+| Option    | Type           | Description                              | Required | Extra info                                               |
+|-----------|----------------|------------------------------------------|----------|----------------------------------------------------------|
+| `token`   | `string`       | The private or public token of the album | true     |                                                          |
+| `files`   | `int[]`        | The ids of the files to download         | true     | the ids can be found as part of the `WaifuFile` response |
+| `count`   | `int`          | The number of files to download          | true     |                                                          |
+| `contents | `MemoryStream` | The memory stream to hold the download   | true     |                                                          |
+
+
+```c
+MemoryStream *albumZip;
+
+downloadAlbum("some-album-token", NULL, 0, albumZip);
 ```
 
 ### Get Restrictions<a id="get-restrictions"></a>

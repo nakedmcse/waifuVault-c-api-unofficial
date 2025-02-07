@@ -326,6 +326,7 @@ void downloadAlbum(char *token, int *files, int count, MemoryStream *contents) {
             snprintf(str, sizeof(str), "%d,", files[i]);
             strcat(body, str);
         }
+        body[strlen(body)-1] = 0;
         strcat(body, "]");
     }
 
