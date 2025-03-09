@@ -1,9 +1,9 @@
 // Waifuvault C SDK prototypes
+#ifndef WAIFUVAULT_C_API
+#define WAIFUVAULT_C_API
 #include<stdbool.h>
 #include "waifuvault-c-models.h"
 #include<curl/curl.h>
-#ifndef WAIFUVAULT_C_API
-#define WAIFUVAULT_C_API
 
 void openCurl();
 void closeCurl();

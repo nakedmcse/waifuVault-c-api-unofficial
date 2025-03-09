@@ -1,9 +1,8 @@
 // Waifuvault C SDK Models
-#include<stdbool.h>
-#include<stdlib.h>
-
 #ifndef WAIFUVAULT_C_MODELS
 #define WAIFUVAULT_C_MODELS
+#include<stdbool.h>
+#include<stdlib.h>
 
 // FileUpload
 typedef struct FileUpload {
@@ -52,21 +51,61 @@ typedef struct FileResponse {
     FileOptions options;
 } FileResponse;
 
+typedef struct DynamicFileResponse {
+    FileResponse *items;
+    size_t count;
+    size_t capacity;
+} DynamicFileResponse;
+
+static inline void fileResponseAppend(DynamicFileResponse *response, FileResponse fileResponse) {
+    if (response->count >= response->capacity) {
+        if (response->capacity == 0) {
+            response->capacity = 256;
+            response->items = malloc(response->capacity * sizeof(FileResponse));
+        }
+        else {
+            response->capacity *= 2;
+            response->items = realloc(response->items, response->capacity * sizeof(FileResponse));
+        }
+    }
+    response->items[response->count++] = fileResponse;
+}
+
 // AlbumResponse
 typedef struct AlbumResponse {
     char token[80];
     char bucketToken[80];
     char publicToken[80];
     char name[120];
-    FileResponse files[256];
+    DynamicFileResponse files;
     unsigned long dateCreated;
 } AlbumResponse;
+
+typedef struct DynamicAlbumInfo {
+    AlbumInfo *items;
+    size_t count;
+    size_t capacity;
+} DynamicAlbumInfo;
+
+static inline void albumInfoAppend(DynamicAlbumInfo *response, AlbumInfo albumInfo) {
+    if (response->count >= response->capacity) {
+        if (response->capacity == 0) {
+            response->capacity = 256;
+            response->items = malloc(response->capacity * sizeof(AlbumInfo));
+        }
+        else {
+            response->capacity *= 2;
+            response->items = realloc(response->items, response->capacity * sizeof(AlbumInfo));
+        }
+    }
+    response->items[response->count++] = albumInfo;
+}
 
 // BucketResponse
 typedef struct BucketResponse {
     char token[80];
-    FileResponse files[256];
-    AlbumInfo albums[256];
+    DynamicFileResponse files;
+    DynamicAlbumInfo albums;
 } BucketResponse;
 
 // ErrorResponse

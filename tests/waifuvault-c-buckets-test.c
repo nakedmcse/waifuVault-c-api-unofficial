@@ -60,10 +60,10 @@ int main(void) {
     }
     printf("--GET BUCKET COMPLETED--\n");
     printf("Bucket token: %s\n", bucketGet.token);
-    printf("File: %s\n", bucketGet.files[0].url);
-    printf("Token: %s\n", bucketGet.files[0].token);
-    printf("File: %s\n", bucketGet.files[1].url);
-    printf("Token: %s\n\n", bucketGet.files[1].token);
+    printf("File: %s\n", bucketGet.files.items[0].url);
+    printf("Token: %s\n", bucketGet.files.items[0].token);
+    printf("File: %s\n", bucketGet.files.items[1].url);
+    printf("Token: %s\n\n", bucketGet.files.items[1].token);
     sleep(1);
 
     // Delete bucket

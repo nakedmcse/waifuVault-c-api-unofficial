@@ -18,8 +18,8 @@ int main(void) {
     openCurl();
 
     // Set Alternate BASEURL
-    //setAltBaseURL("https://waifuvault.walker.moe/rest");
-    setAltBaseURL("http://localhost:8081/rest");
+    setAltBaseURL("https://waifuvault.walker.moe/rest");
+    //setAltBaseURL("http://localhost:8081/rest");
     printf("--SET ALT BASE URL COMPLETED--\n");
 
     // Create bucket
@@ -64,7 +64,7 @@ int main(void) {
     files[1] = uploadResponse2.token;
     albumAssoc = associateFiles(albumCreate.token, files, 2);
     printf("--ALBUM FILES ASSOCIATE COMPLETED--\n");
-    printf("File token 1: %s\nFile token 2: %s\n\n", albumAssoc.files[0].token, albumAssoc.files[1].token);
+    printf("File token 1: %s\nFile token 2: %s\n\n", albumAssoc.files.items[0].token, albumAssoc.files.items[1].token);
     sleep(1);
 
     // Share Album
@@ -82,7 +82,7 @@ int main(void) {
     // Disassociate Files
     albumDis = disassociateFiles(albumCreate.token, files, 2);
     printf("--ALBUM FILES DISASSOCIATE COMPLETED--\n");
-    printf("File token 1: %s\nFile token 2: %s\n\n", albumDis.files[0].token, albumDis.files[1].token);
+    printf("Files count: %lu\n", albumDis.files.count);
     sleep(1);
 
     // Delete Album

@@ -122,8 +122,8 @@ int main(void) {
 
 	bucket = deserializeBucketResponse(bucketJson);
 	printf("Bucket Token: %s\n", bucket.token);
-	printf("Album Name: %s\n", bucket.albums[0].name);
-	printf("File Ids: %d, %d, %d\n", bucket.files[0].id, bucket.files[1].id, bucket.files[2].id);
+	printf("Album Name: %s\n", bucket.albums.items[0].name);
+	printf("File Ids: %d, %d, %d\n", bucket.files.items[0].id, bucket.files.items[1].id, bucket.files.items[2].id);
 
 	return 0;
 }

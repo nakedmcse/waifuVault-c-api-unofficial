@@ -384,7 +384,7 @@ printf("Return: %s\n", deleteResponse ? "True" : "False");
 
 ### Get Bucket<a id="get-bucket"></a>
 
-To get the list of files contained in a bucket, you use the `getBucket` function and supply the token.
+To get the list of files and albums contained in a bucket, you use the `getBucket` function and supply the token.
 This function takes the following options as parameters:
 
 | Option      | Type      | Description             | Required | Extra info        |
@@ -397,10 +397,12 @@ This will respond with the bucket and all the files the bucket contains.
 BucketResponse bucketGet = getBucket(bucketCreate.token);
 
 printf("Bucket token: %s\n", bucketGet.token);
-printf("File: %s\n", bucketGet.files[0].url);
-printf("Token: %s\n", bucketGet.files[0].token);
-printf("File: %s\n", bucketGet.files[1].url);
-printf("Token: %s\n, bucketGet.files[1].token);
+printf("Files count: %lu\n", bucketGet.files.count);
+printf("Albums count: %lu\n", bucketGet.albums.count);
+printf("File: %s\n", bucketGet.files.items[0].url);
+printf("Token: %s\n", bucketGet.files.items[0].token);
+printf("File: %s\n", bucketGet.files.items[1].url);
+printf("Token: %s\n, bucketGet.files.items[1].token);
 ```
 
 ### Create Album<a id="create-album"></a>
@@ -470,7 +472,8 @@ printf("%s\n", album.token);
 printf("%s\n", album.bucketToken);
 printf("%s\n", album.publicToken);
 printf("%s\n", album.name);
-printf("%s\n", album.files[0].token);  // Array of file objects
+printf("%lu\n", album.files.count);
+printf("%s\n", album.files.items[0].token);  // Array of file objects
 ```
 
 ### Associate Files<a id="associate-files"></a>
@@ -495,7 +498,7 @@ files[1] = "some-file-token-2";
 
 albumAssoc = associateFiles("some-album-token", files, 2);
     
-printf("File token 1: %s\nFile token 2: %s\n\n", albumAssoc.files[0].token, albumAssoc.files[1].token);
+printf("File token 1: %s\nFile token 2: %s\n\n", albumAssoc.files.items[0].token, albumAssoc.files.items[1].token);
 ```
 
 ### Disassociate Files<a id="disassociate-files"></a>
@@ -520,7 +523,7 @@ files[1] = "some-file-token-2";
 
 albumDisassoc = disassociateFiles("some-album-token", files, 2);
     
-printf("File token 1: %s\nFile token 2: %s\n\n", albumDisassoc.files[0].token, albumDisassoc.files[1].token);
+printf("File count: %lu\n", albumDisassoc.files.count);
 ```
 
 ### Share Album<a id="share-album"></a>

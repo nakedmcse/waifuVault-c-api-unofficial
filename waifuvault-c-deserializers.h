@@ -1,13 +1,12 @@
 // Waifuvault C SDK JSON Desrializers
+#ifndef WAIFUVAULT_C_DESERIALIZERS_H
+#define WAIFUVAULT_C_DESERIALIZERS_H
 #include<stdio.h>
 #include<stdbool.h>
 #include<stdlib.h>
 #include<stddef.h>
 #include "waifuvault-c-models.h"
 #include "cJSON.h"
-
-#ifndef WAIFUVAULT_C_DESERIALIZERS_H
-#define WAIFUVAULT_C_DESERIALIZERS_H
 
 // Unmarshallers
 // Deserialize FileOptions
@@ -90,7 +89,6 @@ FileResponse unmarshalFileResponse(cJSON *body) {
 AlbumResponse unmarshalAlbumResponse(cJSON *body) {
     AlbumResponse retval;
     cJSON *token, *publicToken, *name, *bucket, *dateCreated, *files, *file;
-    int i = 0;
 
     token = cJSON_GetObjectItem(body, "token");
     publicToken = cJSON_GetObjectItem(body, "publicToken");
@@ -106,15 +104,10 @@ AlbumResponse unmarshalAlbumResponse(cJSON *body) {
     if(cJSON_IsString(name)) strncpy(retval.name, name->valuestring, 120);
     if(cJSON_IsNumber(dateCreated)) retval.dateCreated = (unsigned long)dateCreated->valueint;
 
-    for(int j = 0; j < 256; j++) {
-        retval.files[j].bucket[0] = 0;
-        retval.files[j].id = -1;
-        retval.files[j].token[0] = 0;
-    }
+    retval.files.count = 0;
+    retval.files.capacity = 0;
     cJSON_ArrayForEach(file, files) {
-        retval.files[i] = unmarshalFileResponse(file);
-        i++;
-        if(i>255) break;
+        fileResponseAppend(&retval.files, unmarshalFileResponse(file));
     }
 
     return retval;
@@ -124,44 +117,22 @@ AlbumResponse unmarshalAlbumResponse(cJSON *body) {
 BucketResponse unmarshalBucket(cJSON *body) {
     BucketResponse retval;
     retval.token[0] = 0;
-    AlbumInfo emptyAlbum;
-    emptyAlbum.bucket[0] = 0;
-    emptyAlbum.name[0] = 0;
-    emptyAlbum.token[0] = 0;
-    emptyAlbum.publicToken[0] = 0;
-    emptyAlbum.dateCreated = 0;
-    FileOptions emptyOptions;
-    emptyOptions.protected = false;
-    emptyOptions.hasFilename = false;
-    emptyOptions.oneTimeDownload = false;
-    FileResponse emptyFile;
-    emptyFile.album = emptyAlbum;
-    emptyFile.options = emptyOptions;
-    emptyFile.bucket[0] = 0;
-    emptyFile.id = -1;
-    emptyFile.token[0] = 0;
-    emptyFile.url[0] = 0;
-    emptyFile.views = -1;
-    emptyFile.retentionPeriod[0] = 0;
-    retval.files[0] = emptyFile;
-    retval.albums[0] = emptyAlbum;
+    retval.files.count = 0;
+    retval.files.capacity = 0;
+    retval.albums.count = 0;
+    retval.albums.capacity = 0;
 
     cJSON *token, *files, *file, *albums, *album;
-    int i = 0, j = 0;
     token = cJSON_GetObjectItem(body, "token");
     files = cJSON_GetObjectItem(body, "files");
     albums = cJSON_GetObjectItem(body, "albums");
 
     if(cJSON_IsString(token)) strncpy(retval.token, token->valuestring, 80);
     cJSON_ArrayForEach(file, files) {
-        retval.files[i] = unmarshalFileResponse(file);
-        i++;
-        if(i>255) break;
+        fileResponseAppend(&retval.files, unmarshalFileResponse(file));
     }
     cJSON_ArrayForEach(album, albums) {
-        retval.albums[j] = unmarshalAlbumInfo(album);
-        j++;
-        if(j>255) break;
+        albumInfoAppend(&retval.albums, unmarshalAlbumInfo(album));
     }
 
     return retval;

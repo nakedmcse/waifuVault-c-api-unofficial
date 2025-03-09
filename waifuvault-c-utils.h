@@ -1,13 +1,12 @@
 // Waifuvault C SDK Utility Functions
+#ifndef WAIFUVAULT_C_UTILS
+#define WAIFUVAULT_C_UTILS
 #include<stdbool.h>
 #include<string.h>
 #include<strings.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include "waifuvault-c-models.h"
-
-#ifndef WAIFUVAULT_C_UTILS
-#define WAIFUVAULT_C_UTILS
 
 // Expand homedir
 

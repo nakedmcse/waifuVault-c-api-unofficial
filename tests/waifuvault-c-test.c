@@ -4,7 +4,6 @@
 #include<strings.h>
 #include<unistd.h>
 #include "../waifuvault-c-api.h"
-#include "../waifuvault-c-models.h"
 
 int main(void) {
     FileResponse infoResponse, uploadResponse, updateResponse;

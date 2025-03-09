@@ -1,6 +1,5 @@
 // Waifuvault C SDK
 #include "waifuvault-c-api.h"
-#include "waifuvault-c-models.h"
 #include "waifuvault-c-utils.h"
 #include "waifuvault-c-deserializers.h"
 #include "cJSON.h"
