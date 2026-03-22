@@ -2,6 +2,10 @@
 #include "waifuvault-c-api.h"
 #include "waifuvault-c-utils.h"
 #include "waifuvault-c-deserializers.h"
+#include "tests/waifuvault-c-mocks.h"
+#ifdef WAIFUVAULT_C_UNIT_TEST
+#include "tests/waifuvault-c-mocks.h"
+#endif
 #include "cJSON.h"
 #include<stdio.h>
 #include<stdlib.h>
@@ -30,6 +34,7 @@ void closeCurl() {
 }
 
 CURLcode dispatchCurl(char *targetUrl, char *targetMethod, char *fields, struct curl_httppost *formpost, struct curl_slist *headers, MemoryStream *contents) {
+#ifndef WAIFUVAULT_C_UNIT_TEST
     curl = curl_easy_init();
     contents->memory = malloc(1);
     contents->size = 0;
@@ -43,6 +48,23 @@ CURLcode dispatchCurl(char *targetUrl, char *targetMethod, char *fields, struct 
     if(formpost) curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
     if(fields) curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fields);
     return curl_easy_perform(curl);
+#else
+    dispatchMock.calls++;
+    dispatchMock.targetUrl = targetUrl ? strdup(targetUrl) : NULL;
+    dispatchMock.targetMethod = targetMethod ? strdup(targetMethod) : NULL;
+    dispatchMock.fields = fields ? strdup(fields) : NULL;
+    dispatchMock.headers = headers;
+    dispatchMock.formpost = formpost;
+
+    if (dispatchMock.contents && dispatchMock.contents->memory) {
+        contents->memory = strdup(dispatchMock.contents->memory);
+        contents->size = dispatchMock.contents->size;
+    } else {
+        contents->memory = NULL;
+        contents->size = 0;
+    }
+    return dispatchMock.returns;
+#endif
 }
 
 // Error Handling
