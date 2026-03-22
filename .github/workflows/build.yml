@@ -21,5 +21,11 @@ jobs:
       uses: Dup4/actions-setup-gcc@v1
       with:
         version: latest
+    - name: Build tests
+      run: make alltests
+    - name: Run tests
+      run: tests/waifuvault-c-unittests
+    - name: Clean tests
+      run: make clean
     - name: Build libraries
       run: make sdk
