@@ -96,6 +96,74 @@ void testFileInfo() {
     printf("File Info test passed\n");
 }
 
+void testFileInfoNumeric() {
+    // To be implemented
+}
+
+void testUpdateInfo() {
+    // To be implemented
+}
+
+void testDelete() {
+    // To be implemented
+}
+
+void testDownload() {
+    // To be implemented
+}
+
+void testCreateBucket() {
+    // To be implemented
+}
+
+void testGetBucket() {
+    // To be implemented
+}
+
+void testDeleteBucket() {
+    // To be implemented
+}
+
+void testCreateAlbum() {
+    // To be implemented
+}
+
+void testDeleteAlbum() {
+    // To be implemented
+}
+
+void testGetAlbum() {
+    // To be implemented
+}
+
+void testShareAlbum() {
+    // To be implemented
+}
+
+void testRevokeAlbum() {
+    // To be implemented
+}
+
+void testAssociateFiles() {
+    // To be implemented
+}
+
+void testDisassociateFiles() {
+    // To be implemented
+}
+
+void testDownloadAlbum() {
+    // To be implemented
+}
+
+void testGetRestrictions() {
+    // To be implemented
+}
+
+void testGetFileStats() {
+    // To be implemented
+}
+
 int main(void) {
     openCurl();
     clearRestrictions();
