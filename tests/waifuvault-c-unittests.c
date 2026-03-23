@@ -14,6 +14,10 @@ struct dispatchMock dispatchMock = {
     0, CURLE_OK, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
+// Responses
+static char *fileInfoOK = "{\"url\":\"https://waifuvault.moe/f/something\", \"token\":\"test-token\", \"bucket\":\"test-bucket\", \"retentionPeriod\":100, \"options\":{\"protected\":false, \"hideFilename\":false, \"oneTimeDownload\":false}}";
+static char *fileInfoOKText = "{\"url\":\"https://waifuvault.moe/f/something\", \"token\":\"test-token\", \"bucket\":\"test-bucket\", \"retentionPeriod\":\"10 minutes\", \"options\":{\"protected\":false, \"hideFilename\":false, \"oneTimeDownload\":false}}";
+
 void clearMocks() {
     dispatchMock.calls = 0;
     dispatchMock.returns = CURLE_OK;
@@ -28,13 +32,10 @@ void clearMocks() {
 void testURLUpload() {
     // Given
     clearMocks();
-    static char *response = "{\"url\":\"https://waifuvault.moe/f/something\", \"token\":\"test-token\", \"bucket\":\"test-bucket\", \"retentionPeriod\":100, \"options\":{\"protected\":false, \"hideFilename\":false, \"oneTimeDownload\":false}}";
     static MemoryStream contents;
-    contents.memory = response;
-    contents.size = strlen(response);
-    dispatchMock.returns = CURLE_OK;
+    contents.memory = fileInfoOK;
+    contents.size = strlen(fileInfoOK);
     dispatchMock.contents = &contents;
-    dispatchMock.calls = 0;
     FileUpload urlUpload = CreateFileUpload("https://waifuvault.moe/assets/custom/images/08.png","10m","",false,false);
 
     // When
@@ -52,13 +53,10 @@ void testURLUpload() {
 void testFileUpload() {
     // Given
     clearMocks();
-    static char *response = "{\"url\":\"https://waifuvault.moe/f/something\", \"token\":\"test-token\", \"bucket\":\"test-bucket\", \"retentionPeriod\":100, \"options\":{\"protected\":false, \"hideFilename\":false, \"oneTimeDownload\":false}}";
     static MemoryStream contents;
-    contents.memory = response;
-    contents.size = strlen(response);
-    dispatchMock.returns = CURLE_OK;
+    contents.memory = fileInfoOK;
+    contents.size = strlen(fileInfoOK);
     dispatchMock.contents = &contents;
-    dispatchMock.calls = 0;
     FileUpload fileUpload = CreateFileUpload("test.png","10m","",false,false);
 
     // When
@@ -76,13 +74,10 @@ void testFileUpload() {
 void testFileInfo() {
     // Given
     clearMocks();
-    static char *response = "{\"url\":\"https://waifuvault.moe/f/something\", \"token\":\"test-token\", \"bucket\":\"test-bucket\", \"retentionPeriod\":\"10 minutes\", \"options\":{\"protected\":false, \"hideFilename\":false, \"oneTimeDownload\":false}}";
     static MemoryStream contents;
-    contents.memory = response;
-    contents.size = strlen(response);
-    dispatchMock.returns = CURLE_OK;
+    contents.memory = fileInfoOKText;
+    contents.size = strlen(fileInfoOKText);
     dispatchMock.contents = &contents;
-    dispatchMock.calls = 0;
 
     // When
     FileResponse infoResponse = fileInfo("test-token", true);
