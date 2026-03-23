@@ -92,11 +92,43 @@ void testFileInfo() {
 }
 
 void testFileInfoNumeric() {
-    // To be implemented
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = fileInfoOK;
+    contents.size = strlen(fileInfoOK);
+    dispatchMock.contents = &contents;
+
+    // When
+    FileResponse infoResponse = fileInfo("test-token", true);
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(strncmp("https://waifuvault.moe/f/something",infoResponse.url,strlen(infoResponse.url)) == 0);
+    assert(strncmp("test-token",infoResponse.token,strlen(infoResponse.token)) == 0);
+    assert(infoResponse.options.protected == false);
+    assert(strncmp("100",infoResponse.retentionPeriod,strlen(infoResponse.retentionPeriod)) == 0);
+    printf("File Info Numeric test passed\n");
 }
 
 void testUpdateInfo() {
-    // To be implemented
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = fileInfoOK;
+    contents.size = strlen(fileInfoOK);
+    dispatchMock.contents = &contents;
+
+    // When
+    FileResponse updateResponse = fileUpdate("test-token", "password", "previous", "exp", false);
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(strncmp("https://waifuvault.moe/f/something",updateResponse.url,strlen(updateResponse.url)) == 0);
+    assert(strncmp("test-token",updateResponse.token,strlen(updateResponse.token)) == 0);
+    assert(strncmp("{\"password\":\"password\",\"previousPassword\":\"previous\",\"customExpiry\":\"exp\",\"hideFilename\":false}",
+        dispatchMock.fields, strlen(dispatchMock.fields)) == 0);
+    printf("File Update test passed\n");
 }
 
 void testDelete() {
@@ -165,6 +197,8 @@ int main(void) {
     testURLUpload();
     testFileUpload();
     testFileInfo();
+    testFileInfoNumeric();
+    testUpdateInfo();
     closeCurl();
     return 0;
 }
