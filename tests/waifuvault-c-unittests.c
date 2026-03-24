@@ -18,7 +18,7 @@ struct dispatchMock dispatchMock = {
 static char *fileInfoOK = "{\"url\":\"https://waifuvault.moe/f/something\", \"token\":\"test-token\", \"bucket\":\"test-bucket\", \"retentionPeriod\":100, \"options\":{\"protected\":false, \"hideFilename\":false, \"oneTimeDownload\":false}}";
 static char *fileInfoOKText = "{\"url\":\"https://waifuvault.moe/f/something\", \"token\":\"test-token\", \"bucket\":\"test-bucket\", \"retentionPeriod\":\"10 minutes\", \"options\":{\"protected\":false, \"hideFilename\":false, \"oneTimeDownload\":false}}";
 static char *deleteTrue = "true";
-static unsigned char fileReturn = {0xba, 0xad, 0xf0, 0x0d};
+static unsigned char fileReturn[4] = {0xba, 0xad, 0xf0, 0x0d};
 
 void clearMocks() {
     dispatchMock.calls = 0;
