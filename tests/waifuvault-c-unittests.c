@@ -19,6 +19,7 @@ static char *fileInfoOK = "{\"url\":\"https://waifuvault.moe/f/something\", \"to
 static char *fileInfoOKText = "{\"url\":\"https://waifuvault.moe/f/something\", \"token\":\"test-token\", \"bucket\":\"test-bucket\", \"retentionPeriod\":\"10 minutes\", \"options\":{\"protected\":false, \"hideFilename\":false, \"oneTimeDownload\":false}}";
 static char *deleteTrue = "true";
 static char *emptyBucket = "{\"token\":\"test-bucket\", \"files\":[]}";
+static char *usedBucket = "{\"token\":\"56a62473-d3ef-48f9-baef-3628a3d23549\",\"files\":[{\"bucket\":\"56a62473-d3ef-48f9-baef-3628a3d23549\",\"retentionPeriod\":null,\"album\":null,\"token\":\"0dd4b9b5-1e7e-4852-bdc5-54a79feb07c9\",\"id\":21343,\"views\":13,\"url\":\"https://waifuvault.moe/f/d270ad3d-3992-4dec-9ddd-ee32c6f5706f/voice.zip\",\"options\":{\"hideFilename\":false,\"oneTimeDownload\":false,\"protected\":false}},{\"bucket\":\"56a62473-d3ef-48f9-baef-3628a3d23549\",\"retentionPeriod\":20905635650,\"album\":{\"token\":\"b96413f7-2e34-4691-8f44-6b9fcf83ca7c\",\"publicToken\":\"ce8c7459-b26f-4844-b65a-4d1668308c8e\",\"name\":\"Something\",\"bucket\":\"56a62473-d3ef-48f9-baef-3628a3d23549\",\"dateCreated\":1766428873426},\"token\":\"bb183720-58eb-44d6-9eff-d72536edf302\",\"id\":21084,\"views\":0,\"url\":\"https://waifuvault.moe/f/0b62bc0d-f0fc-471f-aacb-f9e35b0e6821/having%20an%20excited%20conversation%20over%20tea%20in%20a%20victorian%20setting%20s-1073058833.png\",\"options\":{\"hideFilename\":false,\"oneTimeDownload\":false,\"protected\":false}}],\"albums\":[{\"token\":\"b96413f7-2e34-4691-8f44-6b9fcf83ca7c\",\"publicToken\":\"ce8c7459-b26f-4844-b65a-4d1668308c8e\",\"name\":\"Something\",\"bucket\":\"56a62473-d3ef-48f9-baef-3628a3d23549\",\"dateCreated\":1766428873426}]}";
 static char *albumNew = "{\"token\": \"test-album\", \"bucketToken\":\"test-bucket\", \"publicToken\":null, \"name\":\"test-name\", \"files\":[]}";
 static char *generalTrue = "{\"success\":true, \"description\":\"yes\"}";
 static unsigned char fileReturn[4] = {0xba, 0xad, 0xf0, 0x0d};
@@ -199,7 +200,26 @@ void testCreateBucket() {
 }
 
 void testGetBucket() {
-    // To be implemented
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = usedBucket;
+    contents.size = strlen(usedBucket);
+    dispatchMock.contents = &contents;
+
+    // When
+    BucketResponse bresponse = getBucket("test-token");
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(strncmp("POST", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
+    assert(strncmp("https://waifuvault.moe/rest/bucket/get", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(strncmp("{\"bucket_token\":\"test-token\"}",dispatchMock.fields, strlen(dispatchMock.fields)) == 0);
+    assert(bresponse.files.count == 2);
+    assert(strncmp("0dd4b9b5-1e7e-4852-bdc5-54a79feb07c9", bresponse.files.items[0].token, strlen(bresponse.files.items[0].token)) == 0);
+    assert(bresponse.albums.count == 1);
+    assert(strncmp("b96413f7-2e34-4691-8f44-6b9fcf83ca7c", bresponse.albums.items[0].token, strlen(bresponse.albums.items[0].token)) == 0);
+    printf("Get Bucket test passed\n");
 }
 
 void testDeleteBucket() {
