@@ -18,6 +18,9 @@ struct dispatchMock dispatchMock = {
 static char *fileInfoOK = "{\"url\":\"https://waifuvault.moe/f/something\", \"token\":\"test-token\", \"bucket\":\"test-bucket\", \"retentionPeriod\":100, \"options\":{\"protected\":false, \"hideFilename\":false, \"oneTimeDownload\":false}}";
 static char *fileInfoOKText = "{\"url\":\"https://waifuvault.moe/f/something\", \"token\":\"test-token\", \"bucket\":\"test-bucket\", \"retentionPeriod\":\"10 minutes\", \"options\":{\"protected\":false, \"hideFilename\":false, \"oneTimeDownload\":false}}";
 static char *deleteTrue = "true";
+static char *emptyBucket = "{\"token\":\"test-bucket\", \"files\":[]}";
+static char *albumNew = "{\"token\": \"test-album\", \"bucketToken\":\"test-bucket\", \"publicToken\":null, \"name\":\"test-name\", \"files\":[]}";
+static char *generalTrue = "{\"success\":true, \"description\":\"yes\"}";
 static unsigned char fileReturn[4] = {0xba, 0xad, 0xf0, 0x0d};
 
 void clearMocks() {
@@ -178,7 +181,21 @@ void testDownload() {
 }
 
 void testCreateBucket() {
-    // To be implemented
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = emptyBucket;
+    contents.size = strlen(emptyBucket);
+    dispatchMock.contents = &contents;
+
+    // When
+    BucketResponse bresponse = createBucket();
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(strncmp("GET", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
+    assert(strncmp("https://waifuvault.moe/rest/bucket/create", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    printf("Create Bucket test passed\n");
 }
 
 void testGetBucket() {
@@ -186,15 +203,61 @@ void testGetBucket() {
 }
 
 void testDeleteBucket() {
-    // To be implemented
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = deleteTrue;
+    contents.size = strlen(deleteTrue);
+    dispatchMock.contents = &contents;
+
+    // When
+    bool deleteBucketResponse = deleteBucket("test-token");
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(deleteBucketResponse);
+    assert(strncmp("DELETE", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
+    assert(strncmp("https://waifuvault.moe/rest/bucket/test-token", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    printf("Delete Bucket test passed\n");
 }
 
 void testCreateAlbum() {
-    // To be implemented
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = albumNew;
+    contents.size = strlen(albumNew);
+    dispatchMock.contents = &contents;
+
+    // When
+    AlbumResponse albumResponse = createAlbum("test-bucket", "test-name");
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(strncmp("POST", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
+    assert(strncmp("https://waifuvault.moe/rest/album/test-bucket", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(strncmp("test-name", albumResponse.name, strlen(albumResponse.name)) == 0);
+    assert(strncmp("test-album", albumResponse.token, strlen(albumResponse.token)) == 0);
+    printf("Create Album test passed\n");
 }
 
 void testDeleteAlbum() {
-    // To be implemented
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = generalTrue;
+    contents.size = strlen(generalTrue);
+    dispatchMock.contents = &contents;
+
+    // When
+    bool deleteAlbumResponse = deleteAlbum("test-album", true);
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(deleteAlbumResponse);
+    assert(strncmp("DELETE", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
+    assert(strncmp("https://waifuvault.moe/rest/album/test-album?deleteFiles=true", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    printf("Delete Album test passed\n");
 }
 
 void testGetAlbum() {
@@ -239,6 +302,11 @@ int main(void) {
     testUpdateInfo();
     testDelete();
     testDownload();
+    testCreateBucket();
+    testGetBucket();
+    testDeleteBucket();
+    testCreateAlbum();
+    testDeleteAlbum();
     closeCurl();
     return 0;
 }
