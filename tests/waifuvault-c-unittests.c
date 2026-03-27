@@ -345,15 +345,80 @@ void testRevokeAlbum() {
 }
 
 void testAssociateFiles() {
-    // To be implemented
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = albumWithFiles;
+    contents.size = strlen(albumWithFiles);
+    dispatchMock.contents = &contents;
+    char *files[2] = {"file-token-1", "file-token-2"};
+
+    // When
+    AlbumResponse albumResponse = associateFiles("album-token", files, 2);
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(strncmp("POST", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
+    assert(strncmp("https://waifuvault.moe/rest/album/album-token/associate", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(strncmp("{\"fileTokens\":[\"file-token-1\",\"file-token-2\"]}",dispatchMock.fields, strlen(dispatchMock.fields)) == 0);
+    assert(strncmp("Something", albumResponse.name, strlen(albumResponse.name)) == 0);
+    assert(strncmp("b96413f7-2e34-4691-8f44-6b9fcf83ca7c", albumResponse.token, strlen(albumResponse.token)) == 0);
+    assert(strncmp("ce8c7459-b26f-4844-b65a-4d1668308c8e", albumResponse.publicToken, strlen(albumResponse.publicToken)) == 0);
+    assert(strncmp("56a62473-d3ef-48f9-baef-3628a3d23549", albumResponse.bucketToken, strlen(albumResponse.bucketToken)) == 0);
+    assert(albumResponse.files.count == 2);
+    assert(strncmp("bb183720-58eb-44d6-9eff-d72536edf302", albumResponse.files.items[0].token, strlen(albumResponse.files.items[0].token)) == 0);
+    assert(strncmp("49cc14d8-c4da-410a-91f7-09848f1e8466", albumResponse.files.items[1].token, strlen(albumResponse.files.items[1].token)) == 0);
+    printf("Associate Files test passed\n");
 }
 
 void testDisassociateFiles() {
-    // To be implemented
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = albumWithFiles;
+    contents.size = strlen(albumWithFiles);
+    dispatchMock.contents = &contents;
+    char *files[2] = {"file-token-1", "file-token-2"};
+
+    // When
+    AlbumResponse albumResponse = disassociateFiles("album-token", files, 2);
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(strncmp("POST", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
+    assert(strncmp("https://waifuvault.moe/rest/album/album-token/disassociate", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(strncmp("{\"fileTokens\":[\"file-token-1\",\"file-token-2\"]}",dispatchMock.fields, strlen(dispatchMock.fields)) == 0);
+    assert(strncmp("Something", albumResponse.name, strlen(albumResponse.name)) == 0);
+    assert(strncmp("b96413f7-2e34-4691-8f44-6b9fcf83ca7c", albumResponse.token, strlen(albumResponse.token)) == 0);
+    assert(strncmp("ce8c7459-b26f-4844-b65a-4d1668308c8e", albumResponse.publicToken, strlen(albumResponse.publicToken)) == 0);
+    assert(strncmp("56a62473-d3ef-48f9-baef-3628a3d23549", albumResponse.bucketToken, strlen(albumResponse.bucketToken)) == 0);
+    assert(albumResponse.files.count == 2);
+    assert(strncmp("bb183720-58eb-44d6-9eff-d72536edf302", albumResponse.files.items[0].token, strlen(albumResponse.files.items[0].token)) == 0);
+    assert(strncmp("49cc14d8-c4da-410a-91f7-09848f1e8466", albumResponse.files.items[1].token, strlen(albumResponse.files.items[1].token)) == 0);
+    printf("Disassociate Files test passed\n");
 }
 
 void testDownloadAlbum() {
-    // To be implemented
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = (char*)&fileReturn;
+    contents.size = 4;
+    dispatchMock.contents = &contents;
+    int files[2] = {6,7};
+    MemoryStream downloadResponse;
+
+    // When
+    downloadAlbum("album-token",files,2,&downloadResponse);
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(downloadResponse.size == 4);
+    assert(strncmp("POST", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
+    assert(strncmp("https://waifuvault.moe/rest/album/download/album-token", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(strncmp("[6,7]",dispatchMock.fields, strlen(dispatchMock.fields)) == 0);
+    assert(memcmp(contents.memory,downloadResponse.memory,downloadResponse.size) == 0);
+    printf("DownloadAlbum test passed\n");
 }
 
 void testGetRestrictions() {
@@ -382,6 +447,9 @@ int main(void) {
     testGetAlbum();
     testShareAlbum();
     testRevokeAlbum();
+    testAssociateFiles();
+    testDisassociateFiles();
+    testDownloadAlbum();
     closeCurl();
     return 0;
 }

@@ -254,7 +254,7 @@ AlbumResponse associateFiles(char *token, char *fileTokens[], int count) {
 
     headers = curl_slist_append(headers, "Content-Type: application/json");
     sprintf(url, "%s/album/%s/associate", BASEURL, token);
-    sprintf(body, "{\"fileTokens\": [");
+    sprintf(body, "{\"fileTokens\":[");
     for(int i = 0; i<count; i++) {
         strcat(body, "\"");
         strcat(body,fileTokens[i]);
