@@ -104,9 +104,7 @@ AlbumResponse unmarshalAlbumResponse(cJSON *body) {
     if(cJSON_IsString(name)) strncpy(retval.name, name->valuestring, 120);
     if(cJSON_IsNumber(dateCreated)) retval.dateCreated = (unsigned long)dateCreated->valueint;
 
-    retval.files.count = 0;
-    retval.files.capacity = 0;
-    retval.files.items = NULL;
+    retval.files = (DynamicFileResponse){NULL, 0,0};
     cJSON_ArrayForEach(file, files) {
         fileResponseAppend(&retval.files, unmarshalFileResponse(file));
     }
@@ -118,12 +116,8 @@ AlbumResponse unmarshalAlbumResponse(cJSON *body) {
 BucketResponse unmarshalBucket(cJSON *body) {
     BucketResponse retval;
     retval.token[0] = 0;
-    retval.files.count = 0;
-    retval.files.capacity = 0;
-    retval.files.items = NULL;
-    retval.albums.count = 0;
-    retval.albums.capacity = 0;
-    retval.albums.items = NULL;
+    retval.files = (DynamicFileResponse){NULL, 0, 0};
+    retval.albums = (DynamicAlbumInfo){NULL, 0, 0};
 
     cJSON *token, *files, *file, *albums, *album;
     token = cJSON_GetObjectItem(body, "token");
@@ -180,9 +174,7 @@ Restriction unmarshalRestriction(cJSON *body) {
 // Deserialize RestrictionResponse
 RestrictionResponse unmarshalRestrictionResponse(cJSON *body) {
     RestrictionResponse retval;
-    retval.restrictions.count = 0;
-    retval.restrictions.capacity = 0;
-    retval.restrictions.items = NULL;
+    retval.restrictions = (DynamicRestrictionResponse){NULL, 0, 0};
 
     cJSON *restriction;
     cJSON_ArrayForEach(restriction, body) {
