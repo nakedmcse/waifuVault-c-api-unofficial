@@ -59,14 +59,9 @@ typedef struct DynamicFileResponse {
 
 static inline void fileResponseAppend(DynamicFileResponse *response, FileResponse fileResponse) {
     if (response->count >= response->capacity) {
-        if (response->capacity == 0) {
-            response->capacity = 256;
-            response->items = malloc(response->capacity * sizeof(FileResponse));
-        }
-        else {
-            response->capacity *= 2;
-            response->items = realloc(response->items, response->capacity * sizeof(FileResponse));
-        }
+        response->capacity = response->capacity == 0 ? 256 : response->capacity * 2;
+        response->items = response->count != 0 ? realloc(response->items, response->capacity * sizeof(FileResponse)) :
+            malloc(response->capacity * sizeof(FileResponse));
     }
     response->items[response->count++] = fileResponse;
 }
@@ -89,14 +84,9 @@ typedef struct DynamicAlbumInfo {
 
 static inline void albumInfoAppend(DynamicAlbumInfo *response, AlbumInfo albumInfo) {
     if (response->count >= response->capacity) {
-        if (response->capacity == 0) {
-            response->capacity = 256;
-            response->items = malloc(response->capacity * sizeof(AlbumInfo));
-        }
-        else {
-            response->capacity *= 2;
-            response->items = realloc(response->items, response->capacity * sizeof(AlbumInfo));
-        }
+        response->capacity = response->capacity == 0 ? 256 : response->capacity * 2;
+        response->items = response->count != 0 ? realloc(response->items, response->capacity * sizeof(AlbumInfo)) :
+            malloc(response->capacity * sizeof(AlbumInfo));
     }
     response->items[response->count++] = albumInfo;
 }
@@ -127,9 +117,25 @@ typedef struct Restriction {
     char value[512];
 } Restriction;
 
+typedef struct DynamicRestrictionResponse {
+    Restriction *items;
+    size_t count;
+    size_t capacity;
+} DynamicRestrictionResponse;
+
+static inline void restrictionResponseAppend(DynamicRestrictionResponse *response, Restriction restriction) {
+    if (response->count >= response->capacity) {
+        response->capacity = response->capacity == 0 ? 256 : response->capacity * 2;
+        response->items = response->count != 0 ? realloc(response->items, response->capacity * sizeof(Restriction)) :
+            malloc(response->capacity * sizeof(Restriction));
+    }
+    response->items[response->count++] = restriction;
+}
+
 // Restriction Response
 typedef struct RestrictionResponse {
-    Restriction restrictions[100];
+    //Restriction restrictions[100];
+    DynamicRestrictionResponse restrictions;
 } RestrictionResponse;
 
 // MIME Lookup table

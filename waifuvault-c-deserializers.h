@@ -169,6 +169,7 @@ Restriction unmarshalRestriction(cJSON *body) {
 
     if(cJSON_IsString(type)) strncpy(retval.type, type->valuestring, 80);
     if(cJSON_IsString(value)) strncpy(retval.value, value->valuestring, 512);
+    if(cJSON_IsNumber(value)) sprintf(retval.value, "%ld", (unsigned long)value->valueint);
 
     return retval;
 }
@@ -176,18 +177,12 @@ Restriction unmarshalRestriction(cJSON *body) {
 // Deserialize RestrictionResponse
 RestrictionResponse unmarshalRestrictionResponse(cJSON *body) {
     RestrictionResponse retval;
-    Restriction emptyRestriction;
-    emptyRestriction.type[0] = 0;
-    emptyRestriction.value[0] = 0;
-    retval.restrictions[0] = emptyRestriction;
-    int i = 0;
+    retval.restrictions.count = 0;
+    retval.restrictions.capacity = 0;
 
-    cJSON *restrictions, *restriction;
-    restrictions = cJSON_GetObjectItem(body, "restrictions");
-    cJSON_ArrayForEach(restriction, restrictions) {
-        retval.restrictions[i] = unmarshalRestriction(restriction);
-        i++;
-        if(i>100) break;
+    cJSON *restriction;
+    cJSON_ArrayForEach(restriction, body) {
+        restrictionResponseAppend(&retval.restrictions, unmarshalRestriction(restriction));
     }
 
     return retval;

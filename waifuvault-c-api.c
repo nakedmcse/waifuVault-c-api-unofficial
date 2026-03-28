@@ -112,6 +112,9 @@ RestrictionResponse getRestrictions() {
     char url[512];
     MemoryStream contents;
     RestrictionResponse retval;
+    retval.restrictions.capacity = 0;
+    retval.restrictions.count = 0;
+    retval.restrictions.items = NULL;
 
     sprintf(url, "%s/resources/restrictions", BASEURL);
 
@@ -120,8 +123,14 @@ RestrictionResponse getRestrictions() {
         retval = deserializeRestrictionResponse(contents.memory);
     }
     free(contents.memory);
-    for(int i = 0; i < 100; i++) {
-        restrictions.restrictions[i] = retval.restrictions[i];
+    if (restrictions.restrictions.count>0) {
+        free(restrictions.restrictions.items);
+        restrictions.restrictions.count = 0;
+        restrictions.restrictions.capacity = 0;
+    }
+    if (retval.restrictions.capacity>0) {
+        restrictions.restrictions.items = malloc(retval.restrictions.capacity * sizeof(Restriction));
+        memcpy(restrictions.restrictions.items, retval.restrictions.items, sizeof(Restriction) * retval.restrictions.capacity);
     }
     return retval;
 }
@@ -143,12 +152,14 @@ FilesInfo getFileStats() {
 
 RestrictionResponse clearRestrictions() {
     RestrictionResponse retval;
-    for(int i = 0; i < 100; i++) {
-        strcpy(restrictions.restrictions[i].type,"");
-        strcpy(restrictions.restrictions[i].value,"");
-        strcpy(retval.restrictions[i].type,"");
-        strcpy(retval.restrictions[i].value,"");
+    if (restrictions.restrictions.count>0) {
+        free(restrictions.restrictions.items);
+        restrictions.restrictions.count = 0;
+        restrictions.restrictions.capacity = 0;
     }
+    retval.restrictions.items = NULL;
+    retval.restrictions.count = 0;
+    retval.restrictions.capacity = 0;
     return retval;
 }
 
@@ -167,10 +178,10 @@ bool checkRestrictions(FileUpload fileObj) {
             filesize = fileObj.bufferSize;
         }
 
-        for(int i=0; i<100; i++) {
-            if(strlen(restrictions.restrictions[i].type)==0) break;
-            if(strcmp(restrictions.restrictions[i].type, "MAX_FILE_SIZE") == 0) {
-                const long maxsize = strtol(restrictions.restrictions[i].value, &endptr, 10);
+        for(int i=0; i<restrictions.restrictions.count; i++) {
+            if(strlen(restrictions.restrictions.items[i].type)==0) break;
+            if(strcmp(restrictions.restrictions.items[i].type, "MAX_FILE_SIZE") == 0) {
+                const long maxsize = strtol(restrictions.restrictions.items[i].value, &endptr, 10);
                 if(filesize > maxsize) {
                     if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
                     error->status = 1;
@@ -179,10 +190,10 @@ bool checkRestrictions(FileUpload fileObj) {
                     return true;
                 }
             }
-            else if(strcmp(restrictions.restrictions[i].type,"BANNED_MIME_TYPE")==0) {
+            else if(strcmp(restrictions.restrictions.items[i].type,"BANNED_MIME_TYPE")==0) {
                 ext = fileExtension(fileObj.filename);
                 filemime = getMime(ext);
-                if(strstr(restrictions.restrictions[i].value,filemime) != NULL) {
+                if(strstr(restrictions.restrictions.items[i].value,filemime) != NULL) {
                     if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
                     error->status = 1;
                     strcpy(error->name, "Restriction Error");

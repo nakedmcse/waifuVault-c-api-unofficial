@@ -52,8 +52,8 @@ void testURLUpload() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("https://waifuvault.moe/f/something",uploadResponse.url,strlen(uploadResponse.url)) == 0);
-    assert(strncmp("test-token",uploadResponse.token,strlen(uploadResponse.token)) == 0);
+    assert(strcmp("https://waifuvault.moe/f/something",uploadResponse.url) == 0);
+    assert(strcmp("test-token",uploadResponse.token) == 0);
     assert(uploadResponse.options.protected == false);
     assert(strncmp("100",uploadResponse.retentionPeriod,strlen(uploadResponse.retentionPeriod)) == 0);
     printf("URL Upload test passed\n");
@@ -73,10 +73,10 @@ void testFileUpload() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("https://waifuvault.moe/f/something",uploadResponse.url,strlen(uploadResponse.url)) == 0);
-    assert(strncmp("test-token",uploadResponse.token,strlen(uploadResponse.token)) == 0);
+    assert(strcmp("https://waifuvault.moe/f/something",uploadResponse.url) == 0);
+    assert(strcmp("test-token",uploadResponse.token) == 0);
     assert(uploadResponse.options.protected == false);
-    assert(strncmp("100",uploadResponse.retentionPeriod,strlen(uploadResponse.retentionPeriod)) == 0);
+    assert(strcmp("100",uploadResponse.retentionPeriod) == 0);
     printf("File Upload test passed\n");
 }
 
@@ -93,10 +93,10 @@ void testFileInfo() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("https://waifuvault.moe/f/something",infoResponse.url,strlen(infoResponse.url)) == 0);
-    assert(strncmp("test-token",infoResponse.token,strlen(infoResponse.token)) == 0);
+    assert(strcmp("https://waifuvault.moe/f/something",infoResponse.url) == 0);
+    assert(strcmp("test-token",infoResponse.token) == 0);
     assert(infoResponse.options.protected == false);
-    assert(strncmp("10 minutes",infoResponse.retentionPeriod,strlen(infoResponse.retentionPeriod)) == 0);
+    assert(strcmp("10 minutes",infoResponse.retentionPeriod) == 0);
     printf("File Info test passed\n");
 }
 
@@ -113,10 +113,10 @@ void testFileInfoNumeric() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("https://waifuvault.moe/f/something",infoResponse.url,strlen(infoResponse.url)) == 0);
-    assert(strncmp("test-token",infoResponse.token,strlen(infoResponse.token)) == 0);
+    assert(strcmp("https://waifuvault.moe/f/something",infoResponse.url) == 0);
+    assert(strcmp("test-token",infoResponse.token) == 0);
     assert(infoResponse.options.protected == false);
-    assert(strncmp("100",infoResponse.retentionPeriod,strlen(infoResponse.retentionPeriod)) == 0);
+    assert(strcmp("100",infoResponse.retentionPeriod) == 0);
     printf("File Info Numeric test passed\n");
 }
 
@@ -133,11 +133,11 @@ void testUpdateInfo() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("https://waifuvault.moe/f/something",updateResponse.url,strlen(updateResponse.url)) == 0);
-    assert(strncmp("PATCH", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("test-token",updateResponse.token,strlen(updateResponse.token)) == 0);
-    assert(strncmp("{\"password\":\"password\",\"previousPassword\":\"previous\",\"customExpiry\":\"exp\",\"hideFilename\":false}",
-        dispatchMock.fields, strlen(dispatchMock.fields)) == 0);
+    assert(strcmp("https://waifuvault.moe/f/something",updateResponse.url) == 0);
+    assert(strcmp("PATCH", dispatchMock.targetMethod) == 0);
+    assert(strcmp("test-token",updateResponse.token) == 0);
+    assert(strcmp("{\"password\":\"password\",\"previousPassword\":\"previous\",\"customExpiry\":\"exp\",\"hideFilename\":false}",
+        dispatchMock.fields) == 0);
     printf("File Update test passed\n");
 }
 
@@ -155,8 +155,8 @@ void testDelete() {
     // Then
     assert(dispatchMock.calls == 1);
     assert(deleteResponse);
-    assert(strncmp("DELETE", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/test-token", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(strcmp("DELETE", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/test-token", dispatchMock.targetUrl) == 0);
     printf("Delete test passed\n");
 }
 
@@ -178,8 +178,8 @@ void testDownload() {
     // Then
     assert(dispatchMock.calls == 1);
     assert(downloadResponse.size == 4);
-    assert(strncmp("GET", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/f/something", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(strcmp("GET", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/f/something", dispatchMock.targetUrl) == 0);
     assert(memcmp(contents.memory,downloadResponse.memory,downloadResponse.size) == 0);
     printf("Download test passed\n");
 }
@@ -197,8 +197,8 @@ void testCreateBucket() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("GET", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/bucket/create", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(strcmp("GET", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/bucket/create", dispatchMock.targetUrl) == 0);
     printf("Create Bucket test passed\n");
 }
 
@@ -215,13 +215,13 @@ void testGetBucket() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("POST", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/bucket/get", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
-    assert(strncmp("{\"bucket_token\":\"test-token\"}",dispatchMock.fields, strlen(dispatchMock.fields)) == 0);
+    assert(strcmp("POST", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/bucket/get", dispatchMock.targetUrl) == 0);
+    assert(strcmp("{\"bucket_token\":\"test-token\"}",dispatchMock.fields) == 0);
     assert(bresponse.files.count == 2);
-    assert(strncmp("0dd4b9b5-1e7e-4852-bdc5-54a79feb07c9", bresponse.files.items[0].token, strlen(bresponse.files.items[0].token)) == 0);
+    assert(strcmp("0dd4b9b5-1e7e-4852-bdc5-54a79feb07c9", bresponse.files.items[0].token) == 0);
     assert(bresponse.albums.count == 1);
-    assert(strncmp("b96413f7-2e34-4691-8f44-6b9fcf83ca7c", bresponse.albums.items[0].token, strlen(bresponse.albums.items[0].token)) == 0);
+    assert(strcmp("b96413f7-2e34-4691-8f44-6b9fcf83ca7c", bresponse.albums.items[0].token) == 0);
     printf("Get Bucket test passed\n");
 }
 
@@ -239,8 +239,8 @@ void testDeleteBucket() {
     // Then
     assert(dispatchMock.calls == 1);
     assert(deleteBucketResponse);
-    assert(strncmp("DELETE", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/bucket/test-token", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(strcmp("DELETE", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/bucket/test-token", dispatchMock.targetUrl) == 0);
     printf("Delete Bucket test passed\n");
 }
 
@@ -257,10 +257,10 @@ void testCreateAlbum() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("POST", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/album/test-bucket", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
-    assert(strncmp("test-name", albumResponse.name, strlen(albumResponse.name)) == 0);
-    assert(strncmp("test-album", albumResponse.token, strlen(albumResponse.token)) == 0);
+    assert(strcmp("POST", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/album/test-bucket", dispatchMock.targetUrl) == 0);
+    assert(strcmp("test-name", albumResponse.name) == 0);
+    assert(strcmp("test-album", albumResponse.token) == 0);
     printf("Create Album test passed\n");
 }
 
@@ -278,8 +278,8 @@ void testDeleteAlbum() {
     // Then
     assert(dispatchMock.calls == 1);
     assert(deleteAlbumResponse);
-    assert(strncmp("DELETE", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/album/test-album?deleteFiles=true", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(strcmp("DELETE", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/album/test-album?deleteFiles=true", dispatchMock.targetUrl) == 0);
     printf("Delete Album test passed\n");
 }
 
@@ -296,15 +296,15 @@ void testGetAlbum() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("GET", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/album/test-token", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
-    assert(strncmp("Something", albumResponse.name, strlen(albumResponse.name)) == 0);
-    assert(strncmp("b96413f7-2e34-4691-8f44-6b9fcf83ca7c", albumResponse.token, strlen(albumResponse.token)) == 0);
-    assert(strncmp("ce8c7459-b26f-4844-b65a-4d1668308c8e", albumResponse.publicToken, strlen(albumResponse.publicToken)) == 0);
-    assert(strncmp("56a62473-d3ef-48f9-baef-3628a3d23549", albumResponse.bucketToken, strlen(albumResponse.bucketToken)) == 0);
+    assert(strcmp("GET", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/album/test-token", dispatchMock.targetUrl) == 0);
+    assert(strcmp("Something", albumResponse.name) == 0);
+    assert(strcmp("b96413f7-2e34-4691-8f44-6b9fcf83ca7c", albumResponse.token) == 0);
+    assert(strcmp("ce8c7459-b26f-4844-b65a-4d1668308c8e", albumResponse.publicToken) == 0);
+    assert(strcmp("56a62473-d3ef-48f9-baef-3628a3d23549", albumResponse.bucketToken) == 0);
     assert(albumResponse.files.count == 2);
-    assert(strncmp("bb183720-58eb-44d6-9eff-d72536edf302", albumResponse.files.items[0].token, strlen(albumResponse.files.items[0].token)) == 0);
-    assert(strncmp("49cc14d8-c4da-410a-91f7-09848f1e8466", albumResponse.files.items[1].token, strlen(albumResponse.files.items[1].token)) == 0);
+    assert(strcmp("bb183720-58eb-44d6-9eff-d72536edf302", albumResponse.files.items[0].token) == 0);
+    assert(strcmp("49cc14d8-c4da-410a-91f7-09848f1e8466", albumResponse.files.items[1].token) == 0);
     printf("Get Album test passed\n");
 }
 
@@ -321,9 +321,9 @@ void testShareAlbum() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("GET", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/album/share/test-album", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
-    assert(strncmp("yes", shareAlbumResponse, strlen(shareAlbumResponse)) == 0);
+    assert(strcmp("GET", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/album/share/test-album", dispatchMock.targetUrl) == 0);
+    assert(strcmp("yes", shareAlbumResponse) == 0);
     printf("Share Album test passed\n");
 }
 
@@ -340,8 +340,8 @@ void testRevokeAlbum() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("GET", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/album/revoke/test-album", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(strcmp("GET", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/album/revoke/test-album", dispatchMock.targetUrl) == 0);
     assert(revokeAlbumResponse);
     printf("Revoke Album test passed\n");
 }
@@ -360,16 +360,16 @@ void testAssociateFiles() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("POST", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/album/album-token/associate", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
-    assert(strncmp("{\"fileTokens\":[\"file-token-1\",\"file-token-2\"]}",dispatchMock.fields, strlen(dispatchMock.fields)) == 0);
-    assert(strncmp("Something", albumResponse.name, strlen(albumResponse.name)) == 0);
-    assert(strncmp("b96413f7-2e34-4691-8f44-6b9fcf83ca7c", albumResponse.token, strlen(albumResponse.token)) == 0);
-    assert(strncmp("ce8c7459-b26f-4844-b65a-4d1668308c8e", albumResponse.publicToken, strlen(albumResponse.publicToken)) == 0);
-    assert(strncmp("56a62473-d3ef-48f9-baef-3628a3d23549", albumResponse.bucketToken, strlen(albumResponse.bucketToken)) == 0);
+    assert(strcmp("POST", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/album/album-token/associate", dispatchMock.targetUrl) == 0);
+    assert(strcmp("{\"fileTokens\":[\"file-token-1\",\"file-token-2\"]}",dispatchMock.fields) == 0);
+    assert(strcmp("Something", albumResponse.name) == 0);
+    assert(strcmp("b96413f7-2e34-4691-8f44-6b9fcf83ca7c", albumResponse.token) == 0);
+    assert(strcmp("ce8c7459-b26f-4844-b65a-4d1668308c8e", albumResponse.publicToken) == 0);
+    assert(strcmp("56a62473-d3ef-48f9-baef-3628a3d23549", albumResponse.bucketToken) == 0);
     assert(albumResponse.files.count == 2);
-    assert(strncmp("bb183720-58eb-44d6-9eff-d72536edf302", albumResponse.files.items[0].token, strlen(albumResponse.files.items[0].token)) == 0);
-    assert(strncmp("49cc14d8-c4da-410a-91f7-09848f1e8466", albumResponse.files.items[1].token, strlen(albumResponse.files.items[1].token)) == 0);
+    assert(strcmp("bb183720-58eb-44d6-9eff-d72536edf302", albumResponse.files.items[0].token) == 0);
+    assert(strcmp("49cc14d8-c4da-410a-91f7-09848f1e8466", albumResponse.files.items[1].token) == 0);
     printf("Associate Files test passed\n");
 }
 
@@ -387,16 +387,16 @@ void testDisassociateFiles() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("POST", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/album/album-token/disassociate", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
-    assert(strncmp("{\"fileTokens\":[\"file-token-1\",\"file-token-2\"]}",dispatchMock.fields, strlen(dispatchMock.fields)) == 0);
-    assert(strncmp("Something", albumResponse.name, strlen(albumResponse.name)) == 0);
-    assert(strncmp("b96413f7-2e34-4691-8f44-6b9fcf83ca7c", albumResponse.token, strlen(albumResponse.token)) == 0);
-    assert(strncmp("ce8c7459-b26f-4844-b65a-4d1668308c8e", albumResponse.publicToken, strlen(albumResponse.publicToken)) == 0);
-    assert(strncmp("56a62473-d3ef-48f9-baef-3628a3d23549", albumResponse.bucketToken, strlen(albumResponse.bucketToken)) == 0);
+    assert(strcmp("POST", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/album/album-token/disassociate", dispatchMock.targetUrl) == 0);
+    assert(strcmp("{\"fileTokens\":[\"file-token-1\",\"file-token-2\"]}",dispatchMock.fields) == 0);
+    assert(strcmp("Something", albumResponse.name) == 0);
+    assert(strcmp("b96413f7-2e34-4691-8f44-6b9fcf83ca7c", albumResponse.token) == 0);
+    assert(strcmp("ce8c7459-b26f-4844-b65a-4d1668308c8e", albumResponse.publicToken) == 0);
+    assert(strcmp("56a62473-d3ef-48f9-baef-3628a3d23549", albumResponse.bucketToken) == 0);
     assert(albumResponse.files.count == 2);
-    assert(strncmp("bb183720-58eb-44d6-9eff-d72536edf302", albumResponse.files.items[0].token, strlen(albumResponse.files.items[0].token)) == 0);
-    assert(strncmp("49cc14d8-c4da-410a-91f7-09848f1e8466", albumResponse.files.items[1].token, strlen(albumResponse.files.items[1].token)) == 0);
+    assert(strcmp("bb183720-58eb-44d6-9eff-d72536edf302", albumResponse.files.items[0].token) == 0);
+    assert(strcmp("49cc14d8-c4da-410a-91f7-09848f1e8466", albumResponse.files.items[1].token) == 0);
     printf("Disassociate Files test passed\n");
 }
 
@@ -416,9 +416,9 @@ void testDownloadAlbum() {
     // Then
     assert(dispatchMock.calls == 1);
     assert(downloadResponse.size == 4);
-    assert(strncmp("POST", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/album/download/album-token", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
-    assert(strncmp("[6,7]",dispatchMock.fields, strlen(dispatchMock.fields)) == 0);
+    assert(strcmp("POST", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/album/download/album-token", dispatchMock.targetUrl) == 0);
+    assert(strcmp("[6,7]",dispatchMock.fields) == 0);
     assert(memcmp(contents.memory,downloadResponse.memory,downloadResponse.size) == 0);
     printf("DownloadAlbum test passed\n");
 }
@@ -436,12 +436,13 @@ void testGetRestrictions() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("GET", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/resources/restrictions", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
-    assert(strncmp("MAX_FILE_SIZE",rResponse.restrictions[0].type, strlen(rResponse.restrictions[0].type)) == 0);
-    assert(strncmp("100",rResponse.restrictions[0].value, strlen(rResponse.restrictions[0].value)) == 0);
-    assert(strncmp("BANNED_MIME_TYPE",rResponse.restrictions[1].type, strlen(rResponse.restrictions[1].type)) == 0);
-    assert(strncmp("application/x-msdownload,application/x-executable",rResponse.restrictions[1].value, strlen(rResponse.restrictions[0].value)) == 0);
+    assert(strcmp("GET", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/resources/restrictions", dispatchMock.targetUrl) == 0);
+    assert(rResponse.restrictions.count == 2);
+    assert(strcmp("MAX_FILE_SIZE",rResponse.restrictions.items[0].type) == 0);
+    assert(strcmp("100",rResponse.restrictions.items[0].value) == 0);
+    assert(strcmp("BANNED_MIME_TYPE",rResponse.restrictions.items[1].type) == 0);
+    assert(strcmp("application/x-msdownload,application/x-executable",rResponse.restrictions.items[1].value) == 0);
     printf("GetRestrictions test passed\n");
 }
 
@@ -458,8 +459,8 @@ void testGetFileStats() {
 
     // Then
     assert(dispatchMock.calls == 1);
-    assert(strncmp("GET", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
-    assert(strncmp("https://waifuvault.moe/rest/resources/stats/files", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(strcmp("GET", dispatchMock.targetMethod) == 0);
+    assert(strcmp("https://waifuvault.moe/rest/resources/stats/files", dispatchMock.targetUrl) == 0);
     assert(statsResponse.recordCount == 2);
     assert(statsResponse.recordSize == 100);
     printf("GetFileStats test passed\n");
