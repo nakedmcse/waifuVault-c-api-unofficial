@@ -78,9 +78,6 @@ void clearError() {
 }
 
 bool checkError(CURLcode resp, char *body) {
-    char name[80];
-    char message[512];
-    int status = 0;
     long http_code = 0;
 
     if(resp != CURLE_OK) {
