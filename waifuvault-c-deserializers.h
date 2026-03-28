@@ -106,6 +106,7 @@ AlbumResponse unmarshalAlbumResponse(cJSON *body) {
 
     retval.files.count = 0;
     retval.files.capacity = 0;
+    retval.files.items = NULL;
     cJSON_ArrayForEach(file, files) {
         fileResponseAppend(&retval.files, unmarshalFileResponse(file));
     }
@@ -119,8 +120,10 @@ BucketResponse unmarshalBucket(cJSON *body) {
     retval.token[0] = 0;
     retval.files.count = 0;
     retval.files.capacity = 0;
+    retval.files.items = NULL;
     retval.albums.count = 0;
     retval.albums.capacity = 0;
+    retval.albums.items = NULL;
 
     cJSON *token, *files, *file, *albums, *album;
     token = cJSON_GetObjectItem(body, "token");
@@ -179,6 +182,7 @@ RestrictionResponse unmarshalRestrictionResponse(cJSON *body) {
     RestrictionResponse retval;
     retval.restrictions.count = 0;
     retval.restrictions.capacity = 0;
+    retval.restrictions.items = NULL;
 
     cJSON *restriction;
     cJSON_ArrayForEach(restriction, body) {

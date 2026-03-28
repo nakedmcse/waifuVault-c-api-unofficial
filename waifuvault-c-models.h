@@ -60,8 +60,7 @@ typedef struct DynamicFileResponse {
 static inline void fileResponseAppend(DynamicFileResponse *response, FileResponse fileResponse) {
     if (response->count >= response->capacity) {
         response->capacity = response->capacity == 0 ? 256 : response->capacity * 2;
-        response->items = response->count != 0 ? realloc(response->items, response->capacity * sizeof(FileResponse)) :
-            malloc(response->capacity * sizeof(FileResponse));
+        response->items = realloc(response->items, response->capacity * sizeof(FileResponse));
     }
     response->items[response->count++] = fileResponse;
 }
@@ -85,8 +84,7 @@ typedef struct DynamicAlbumInfo {
 static inline void albumInfoAppend(DynamicAlbumInfo *response, AlbumInfo albumInfo) {
     if (response->count >= response->capacity) {
         response->capacity = response->capacity == 0 ? 256 : response->capacity * 2;
-        response->items = response->count != 0 ? realloc(response->items, response->capacity * sizeof(AlbumInfo)) :
-            malloc(response->capacity * sizeof(AlbumInfo));
+        response->items = realloc(response->items, response->capacity * sizeof(AlbumInfo));
     }
     response->items[response->count++] = albumInfo;
 }
@@ -126,8 +124,7 @@ typedef struct DynamicRestrictionResponse {
 static inline void restrictionResponseAppend(DynamicRestrictionResponse *response, Restriction restriction) {
     if (response->count >= response->capacity) {
         response->capacity = response->capacity == 0 ? 256 : response->capacity * 2;
-        response->items = response->count != 0 ? realloc(response->items, response->capacity * sizeof(Restriction)) :
-            malloc(response->capacity * sizeof(Restriction));
+        response->items = realloc(response->items, response->capacity * sizeof(Restriction));
     }
     response->items[response->count++] = restriction;
 }
