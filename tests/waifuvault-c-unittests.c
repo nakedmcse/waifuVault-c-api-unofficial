@@ -23,6 +23,8 @@ static char *usedBucket = "{\"token\":\"56a62473-d3ef-48f9-baef-3628a3d23549\",\
 static char *albumNew = "{\"token\": \"test-album\", \"bucketToken\":\"test-bucket\", \"publicToken\":null, \"name\":\"test-name\", \"files\":[]}";
 static char *albumWithFiles = "{\"token\":\"b96413f7-2e34-4691-8f44-6b9fcf83ca7c\",\"bucketToken\":\"56a62473-d3ef-48f9-baef-3628a3d23549\",\"publicToken\":\"ce8c7459-b26f-4844-b65a-4d1668308c8e\",\"name\":\"Something\",\"dateCreated\":1766428873426,\"files\":[{\"bucket\":\"56a62473-d3ef-48f9-baef-3628a3d23549\",\"retentionPeriod\":20841380227,\"album\":null,\"token\":\"bb183720-58eb-44d6-9eff-d72536edf302\",\"id\":21084,\"views\":0,\"url\":\"https://waifuvault.moe/f/0b62bc0d-f0fc-471f-aacb-f9e35b0e6821/having%20an%20excited%20conversation%20over%20tea%20in%20a%20victorian%20setting%20s-1073058833.png\",\"options\":{\"hideFilename\":false,\"oneTimeDownload\":false,\"protected\":false}},{\"bucket\":\"56a62473-d3ef-48f9-baef-3628a3d23549\",\"retentionPeriod\":null,\"album\":null,\"token\":\"49cc14d8-c4da-410a-91f7-09848f1e8466\",\"id\":22185,\"views\":0,\"url\":\"https://waifuvault.moe/f/b9d1f463-5f41-49cb-980b-ca3043382634/1999.jpg\",\"options\":{\"hideFilename\":false,\"oneTimeDownload\":false,\"protected\":false}}]}";
 static char *generalTrue = "{\"success\":true, \"description\":\"yes\"}";
+static char *fileStatsResponse = "{\"recordCount\": 2, \"recordSize\":100}";
+static char *restrictionsResponse = "[{\"type\": \"MAX_FILE_SIZE\",\"value\": 100},{\"type\": \"BANNED_MIME_TYPE\",\"value\": \"application/x-msdownload,application/x-executable\"}]";
 static unsigned char fileReturn[4] = {0xba, 0xad, 0xf0, 0x0d};
 
 void clearMocks() {
@@ -422,11 +424,45 @@ void testDownloadAlbum() {
 }
 
 void testGetRestrictions() {
-    // To be implemented
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = restrictionsResponse;
+    contents.size = strlen(restrictionsResponse);
+    dispatchMock.contents = &contents;
+
+    // When
+    RestrictionResponse rResponse = getRestrictions();
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(strncmp("GET", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
+    assert(strncmp("https://waifuvault.moe/rest/resources/restrictions", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(strncmp("MAX_FILE_SIZE",rResponse.restrictions[0].type, strlen(rResponse.restrictions[0].type)) == 0);
+    assert(strncmp("100",rResponse.restrictions[0].value, strlen(rResponse.restrictions[0].value)) == 0);
+    assert(strncmp("BANNED_MIME_TYPE",rResponse.restrictions[1].type, strlen(rResponse.restrictions[1].type)) == 0);
+    assert(strncmp("application/x-msdownload,application/x-executable",rResponse.restrictions[1].value, strlen(rResponse.restrictions[0].value)) == 0);
+    printf("GetRestrictions test passed\n");
 }
 
 void testGetFileStats() {
-    // To be implemented
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = fileStatsResponse;
+    contents.size = strlen(fileStatsResponse);
+    dispatchMock.contents = &contents;
+
+    // When
+    FilesInfo statsResponse = getFileStats();
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(strncmp("GET", dispatchMock.targetMethod, strlen(dispatchMock.targetMethod)) == 0);
+    assert(strncmp("https://waifuvault.moe/rest/resources/stats/files", dispatchMock.targetUrl, strlen(dispatchMock.targetUrl)) == 0);
+    assert(statsResponse.recordCount == 2);
+    assert(statsResponse.recordSize == 100);
+    printf("GetFileStats test passed\n");
 }
 
 int main(void) {
@@ -450,6 +486,8 @@ int main(void) {
     testAssociateFiles();
     testDisassociateFiles();
     testDownloadAlbum();
+    testGetRestrictions();
+    testGetFileStats();
     closeCurl();
     return 0;
 }
