@@ -446,6 +446,48 @@ void testGetRestrictions() {
     printf("GetRestrictions test passed\n");
 }
 
+void testClearRestrictions() {
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = restrictionsResponse;
+    contents.size = strlen(restrictionsResponse);
+    dispatchMock.contents = &contents;
+
+    // When
+    getRestrictions();
+    RestrictionResponse rResponse = clearRestrictions();
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(rResponse.restrictions.count == 0);
+    assert(rResponse.restrictions.capacity == 0);
+    assert(rResponse.restrictions.items == NULL);
+    printf("ClearRestrictions test passed\n");
+}
+
+void testCheckRestrictions() {
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = restrictionsResponse;
+    contents.size = strlen(restrictionsResponse);
+    dispatchMock.contents = &contents;
+    FileUpload fileUpload = CreateFileUpload("RoryMercury.png","10m","",false,false);
+
+    // When
+    getRestrictions();
+    bool isRestricted = checkRestrictions(fileUpload);
+    ErrorResponse *error = getError();
+
+    // Then
+    assert(isRestricted);
+    assert(error->status == 1);
+    assert(strcmp(error->name,"Restriction Error") == 0);
+    assert(strcmp(error->message,"File size greater than maximum allowed by server") == 0);
+    printf("CheckRestrictions test passed\n");
+}
+
 void testGetFileStats() {
     // Given
     clearMocks();
@@ -488,6 +530,8 @@ int main(void) {
     testDisassociateFiles();
     testDownloadAlbum();
     testGetRestrictions();
+    testClearRestrictions();
+    testCheckRestrictions();
     testGetFileStats();
     closeCurl();
     return 0;

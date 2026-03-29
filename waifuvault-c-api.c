@@ -128,6 +128,8 @@ RestrictionResponse getRestrictions() {
     if (retval.restrictions.capacity>0) {
         restrictions.restrictions.items = malloc(retval.restrictions.capacity * sizeof(Restriction));
         memcpy(restrictions.restrictions.items, retval.restrictions.items, sizeof(Restriction) * retval.restrictions.capacity);
+        restrictions.restrictions.count = retval.restrictions.count;
+        restrictions.restrictions.capacity = retval.restrictions.capacity;
     }
     return retval;
 }
@@ -176,7 +178,6 @@ bool checkRestrictions(FileUpload fileObj) {
         }
 
         for(int i=0; i<restrictions.restrictions.count; i++) {
-            if(strlen(restrictions.restrictions.items[i].type)==0) break;
             if(strcmp(restrictions.restrictions.items[i].type, "MAX_FILE_SIZE") == 0) {
                 const long maxsize = strtol(restrictions.restrictions.items[i].value, &endptr, 10);
                 if(filesize > maxsize) {
