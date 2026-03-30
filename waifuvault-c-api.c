@@ -84,7 +84,11 @@ bool checkError(CURLcode resp, char *body) {
         fprintf(stderr, "curl failed: %s\n", curl_easy_strerror(resp));
         return true;
     }
+    #ifndef WAIFUVAULT_C_UNIT_TEST
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+    #else
+    http_code = dispatchMock.http_code;
+    #endif
     if(http_code >= 400) {
         fprintf(stderr, "http code error: %d\n", (int)http_code);
         if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));

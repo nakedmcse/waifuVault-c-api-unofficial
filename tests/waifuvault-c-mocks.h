@@ -7,6 +7,7 @@
 
 struct dispatchMock {
     int calls;
+    long http_code;
     CURLcode returns;
     MemoryStream *contents;
     char *targetUrl;

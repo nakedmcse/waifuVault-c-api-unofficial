@@ -11,7 +11,7 @@
 #include "../waifuvault-c-models.h"
 
 struct dispatchMock dispatchMock = {
-    0, CURLE_OK, NULL, NULL, NULL, NULL, NULL, NULL
+    0, 200, CURLE_OK, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 // Responses
@@ -25,10 +25,12 @@ static char *albumWithFiles = "{\"token\":\"b96413f7-2e34-4691-8f44-6b9fcf83ca7c
 static char *generalTrue = "{\"success\":true, \"description\":\"yes\"}";
 static char *fileStatsResponse = "{\"recordCount\": 2, \"recordSize\":100}";
 static char *restrictionsResponse = "[{\"type\": \"MAX_FILE_SIZE\",\"value\": 100},{\"type\": \"BANNED_MIME_TYPE\",\"value\": \"application/x-msdownload,application/x-executable\"}]";
+static char *badRequest = "{\"name\": \"BAD_REQUEST\", \"message\": \"Error Test\", \"status\": 400}";
 static unsigned char fileReturn[4] = {0xba, 0xad, 0xf0, 0x0d};
 
 void clearMocks() {
     dispatchMock.calls = 0;
+    dispatchMock.http_code = 200;
     dispatchMock.returns = CURLE_OK;
     dispatchMock.contents = NULL;
     dispatchMock.targetUrl = NULL;
@@ -78,6 +80,29 @@ void testFileUpload() {
     assert(uploadResponse.options.protected == false);
     assert(strcmp("100",uploadResponse.retentionPeriod) == 0);
     printf("File Upload test passed\n");
+}
+
+void testFileUploadError() {
+    // Given
+    clearMocks();
+    static MemoryStream contents;
+    contents.memory = badRequest;
+    contents.size = strlen(badRequest);
+    dispatchMock.contents = &contents;
+    dispatchMock.http_code = 400;
+    FileUpload fileUpload = CreateFileUpload("test.png","10m","",false,false);
+
+    // When
+    FileResponse uploadResponse = uploadFile(fileUpload);
+    ErrorResponse *error = getError();
+
+    // Then
+    assert(dispatchMock.calls == 1);
+    assert(error != NULL);
+    assert(error->status == 400);
+    assert(strcmp("BAD_REQUEST", error->name) == 0);
+    assert(strcmp("Error Test", error->message) == 0);
+    printf("File Upload Error test passed\n");
 }
 
 void testFileInfo() {
@@ -513,6 +538,7 @@ int main(void) {
     clearRestrictions();
     testURLUpload();
     testFileUpload();
+    testFileUploadError();
     testFileInfo();
     testFileInfoNumeric();
     testUpdateInfo();
