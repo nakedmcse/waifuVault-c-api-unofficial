@@ -76,6 +76,7 @@ This API contains 19 interactions:
 17. [Get Restrictions](#get-restrictions)
 18. [Clear Restrictions](#clear-restrictions)
 19. [Set Alternate Base URL](#set-alt-baseurl)
+20. [Get File Stats](#get-file-stats)
 
 You need to include the header files in your code for the package:
 
@@ -639,4 +640,17 @@ This will change the base URL used for all functions within the SDK.
 // Set Alternate BASEURL
 setAltBaseURL("https://waifuvault.walker.moe/rest");
 printf("--SET ALT BASE URL COMPLETED--\n");
+```
+
+### Get File Stats<a id="get-file-stats"></a>
+
+To get general file stats for the server, you use the `getFileStats` function.
+
+This takes no parameters and returns the number of files and the size of files on the server.
+
+```c
+// Get server general file stats
+FilesInfo statsResponse = getFileStats();
+printf("%d\n", statsResponse.recordCount);
+printf("%d\n", statsResponse.recordSize);
 ```
