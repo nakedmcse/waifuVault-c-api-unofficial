@@ -131,7 +131,6 @@ static inline void restrictionResponseAppend(DynamicRestrictionResponse *respons
 
 // Restriction Response
 typedef struct RestrictionResponse {
-    //Restriction restrictions[100];
     DynamicRestrictionResponse restrictions;
 } RestrictionResponse;
 
