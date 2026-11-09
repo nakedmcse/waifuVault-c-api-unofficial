@@ -79,16 +79,7 @@ FileUpload CreateFileUpload(char *target, char *expires, char *password, bool hi
     strcpy(retval.expires,expires);
     strcpy(retval.password,password);
     strcpy(retval.bucketToken, "");
-    if(strncasecmp(target, "http://", 7) == 0 || strncasecmp(target, "https://", 8) == 0) {
-        // Url
-        strcpy(retval.url, target);
-        strcpy(retval.filename, "");
-    }
-    else {
-        // Filename
-        strcpy(retval.filename, target);
-        strcpy(retval.url, "");
-    }
+    strcpy(retval.filename, target);
     return retval;
 }
 
@@ -100,16 +91,7 @@ FileUpload CreateBucketFileUpload(char *target, char *bucketToken, char *expires
     strcpy(retval.expires, expires);
     strcpy(retval.password, password);
     strcpy(retval.bucketToken, bucketToken);
-    if(strncasecmp(target, "http://", 7) == 0 || strncasecmp(target, "https://", 8) == 0) {
-        // Url
-        strcpy(retval.url, target);
-        strcpy(retval.filename, "");
-    }
-    else {
-        // Filename
-        strcpy(retval.filename, target);
-        strcpy(retval.url, "");
-    }
+    strcpy(retval.filename, target);
     return retval;
 }
 
@@ -122,7 +104,6 @@ FileUpload CreateBufferUpload(void *target, long size, char *filename, char *exp
     strcpy(retval.expires,expires);
     strcpy(retval.password,password);
     strcpy(retval.filename,filename);
-    strcpy(retval.url, "");
     strcpy(retval.bucketToken, "");
     return retval;
 }

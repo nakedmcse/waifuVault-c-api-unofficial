@@ -7,7 +7,6 @@
 // FileUpload
 typedef struct FileUpload {
     char filename[512];
-    char url[4096];
 	char bucketToken[80];
     void *buffer;
     long bufferSize;

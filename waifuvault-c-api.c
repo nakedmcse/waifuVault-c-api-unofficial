@@ -171,37 +171,35 @@ bool checkRestrictions(FileUpload fileObj) {
     struct stat stats;
     char *endptr, *ext, *filemime;
 
-    if(strlen(fileObj.url)==0) {
-        if(strlen(fileObj.filename)>0 && fileObj.buffer==NULL) {
-            //File Upload
-            stat(expandHomedir(fileObj.filename), &stats);
-            filesize = stats.st_size;
-        } else {
-            //Buffer Upload
-            filesize = fileObj.bufferSize;
-        }
+    if(strlen(fileObj.filename)>0 && fileObj.buffer==NULL) {
+        //File Upload
+        stat(expandHomedir(fileObj.filename), &stats);
+        filesize = stats.st_size;
+    } else {
+        //Buffer Upload
+        filesize = fileObj.bufferSize;
+    }
 
-        for(int i=0; i<restrictions.restrictions.count; i++) {
-            if(strcmp(restrictions.restrictions.items[i].type, "MAX_FILE_SIZE") == 0) {
-                const long maxsize = strtol(restrictions.restrictions.items[i].value, &endptr, 10);
-                if(filesize > maxsize) {
-                    if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
-                    error->status = 1;
-                    strcpy(error->name, "Restriction Error");
-                    strcpy(error->message, "File size greater than maximum allowed by server");
-                    return true;
-                }
+    for(int i=0; i<restrictions.restrictions.count; i++) {
+        if(strcmp(restrictions.restrictions.items[i].type, "MAX_FILE_SIZE") == 0) {
+            const long maxsize = strtol(restrictions.restrictions.items[i].value, &endptr, 10);
+            if(filesize > maxsize) {
+                if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
+                error->status = 1;
+                strcpy(error->name, "Restriction Error");
+                strcpy(error->message, "File size greater than maximum allowed by server");
+                return true;
             }
-            else if(strcmp(restrictions.restrictions.items[i].type,"BANNED_MIME_TYPE")==0) {
-                ext = fileExtension(fileObj.filename);
-                filemime = getMime(ext);
-                if(strstr(restrictions.restrictions.items[i].value,filemime) != NULL) {
-                    if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
-                    error->status = 1;
-                    strcpy(error->name, "Restriction Error");
-                    strcpy(error->message, "File mime type not allowed by server");
-                    return true;
-                }
+        }
+        else if(strcmp(restrictions.restrictions.items[i].type,"BANNED_MIME_TYPE")==0) {
+            ext = fileExtension(fileObj.filename);
+            filemime = getMime(ext);
+            if(strstr(restrictions.restrictions.items[i].value,filemime) != NULL) {
+                if(error == NULL) error = (ErrorResponse *)malloc(sizeof(ErrorResponse));
+                error->status = 1;
+                strcpy(error->name, "Restriction Error");
+                strcpy(error->message, "File mime type not allowed by server");
+                return true;
             }
         }
     }
@@ -440,19 +438,7 @@ FileResponse uploadFile(FileUpload fileObj) {
     }
 
     char *targetUrl = BuildURL(initUrl, fileObj);
-    if(strlen(fileObj.url)>0) {
-        // URL Upload
-        strcat(fields, "url=");
-        strcat(fields, curl_easy_escape(curl, fileObj.url, strlen(fileObj.url)));
-
-        if (strlen(fileObj.password) > 0) {
-            strcat(fields, "&password=");
-            strcat(fields, curl_easy_escape(curl, fileObj.password, strlen(fileObj.password)));
-        }
-
-        res = dispatchCurl(targetUrl, "PUT", fields, NULL, NULL, &contents);
-    }
-    else if(strlen(fileObj.filename)>0 && fileObj.buffer==NULL) {
+    if(strlen(fileObj.filename)>0 && fileObj.buffer==NULL) {
         // File Upload
         curl_formadd(&formpost,
                &lastptr,

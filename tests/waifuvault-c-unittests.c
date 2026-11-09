@@ -40,27 +40,6 @@ void clearMocks() {
     dispatchMock.headers = NULL;
 }
 
-void testURLUpload() {
-    // Given
-    clearMocks();
-    static MemoryStream contents;
-    contents.memory = fileInfoOK;
-    contents.size = strlen(fileInfoOK);
-    dispatchMock.contents = &contents;
-    FileUpload urlUpload = CreateFileUpload("https://waifuvault.moe/assets/custom/images/08.png","10m","",false,false);
-
-    // When
-    FileResponse uploadResponse = uploadFile(urlUpload);
-
-    // Then
-    assert(dispatchMock.calls == 1);
-    assert(strcmp("https://waifuvault.moe/f/something",uploadResponse.url) == 0);
-    assert(strcmp("test-token",uploadResponse.token) == 0);
-    assert(uploadResponse.options.protected == false);
-    assert(strncmp("100",uploadResponse.retentionPeriod,strlen(uploadResponse.retentionPeriod)) == 0);
-    printf("URL Upload test passed\n");
-}
-
 void testFileUpload() {
     // Given
     clearMocks();
@@ -536,7 +515,6 @@ void testGetFileStats() {
 int main(void) {
     openCurl();
     clearRestrictions();
-    testURLUpload();
     testFileUpload();
     testFileUploadError();
     testFileInfo();

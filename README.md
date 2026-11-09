@@ -10,6 +10,8 @@ with [waifuvault.moe](https://waifuvault.moe/). Contains a full up to date API f
 This is unofficial and as such will not be supported officially.  Use it at your own risk.  Updates to keep it comparable to the official 
 SDKs will be on a best effort basis only.
 
+> **NOTE WELL:** Support for legacy URL uploads feature has been removed
+
 ## Installation
 
 The SDK uses the cJSON library for json parsing, as well as itself.  First build both .o files using the build script in the root directory
@@ -104,7 +106,6 @@ To Upload a file, use the `uploadFile` function. This function takes the followi
 | Option            | Type         | Description                                                     | Required       | Extra info                       |
 |-------------------|--------------|-----------------------------------------------------------------|----------------|----------------------------------|
 | `filename`        | `string `    | The path to the file to upload                                  | true if File   | File path                        |
-| `url`             | `string`     | The URL of the file to target                                   | true if URL    | Filename with extension          |
 | `buffer`          | `byte array` | Byte array containing file to upload                            | true if buffer | Needs filename set also          |
 | `bucketToken`     | `string`     | A bucket token to upload to                                     | false          | Use `CreateBucketFileUpload`     |
 | `expires`         | `string`     | A string containing a number and a unit (1d = 1day)             | false          | Valid units are `m`, `h` and `d` |
@@ -114,26 +115,7 @@ To Upload a file, use the `uploadFile` function. This function takes the followi
 
 > **NOTE:** If you use `getRestrictions` then server restrictions are checked by the SDK client side *before* upload, and will raise an error if they are violated
 
-Using a URL:
-
-```c
-FileResponse uploadResponse;
-FileUpload urlUpload;
-
-urlUpload = CreateFileUpload("https://waifuvault.moe/assets/custom/images/08.png","10m","",false,false);
-uploadResponse = uploadFile(urlUpload);
-
-err = getError();
-if(err) {
-    printf("Error Status: %d\n", err->status);
-    printf("Error Name: %s\n", err->name);
-    printf("Error Message: %s\n\n", err->message);
-    clearError();
-} else {
-    printf("URL: %s\n", uploadResponse.url);
-    printf("Token: %s\n\n", uploadResponse.token);
-}
-```
+> **NOTE WELL:** Support for legacy URL uploads feature has been removed
 
 Using a file path:
 
